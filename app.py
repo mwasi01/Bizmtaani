@@ -8,25 +8,30 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import uuid
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 CORS(app)
 
-# Data storage (in production, use a database)
-DATA_FILE = 'data/business_data.json'
+# For Render, we'll use a relative path in the file system
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, 'data', 'business_data.json')
 
 def load_data():
     """Load business data from JSON file"""
-    if os.path.exists(DATA_FILE):
-        try:
+    try:
+        os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+        
+        if os.path.exists(DATA_FILE):
             with open(DATA_FILE, 'r') as f:
                 data = json.load(f)
-                # Ensure all required fields exist and are valid
                 data = validate_data(data)
                 return data
-        except json.JSONDecodeError:
-            # If file is corrupted, return default data
-            return get_default_data()
-    else:
+        else:
+            # Create default data file
+            default_data = get_default_data()
+            save_data(default_data)
+            return default_data
+    except Exception as e:
+        print(f"Error loading data: {e}")
         return get_default_data()
 
 def get_default_data():
@@ -138,7 +143,6 @@ def get_default_data():
 
 def validate_data(data):
     """Validate and fix data structure"""
-    # Ensure all required keys exist
     required_keys = ["products", "transactions", "customers", "suppliers", "notes", "settings"]
     for key in required_keys:
         if key not in data:
@@ -147,7 +151,6 @@ def validate_data(data):
     
     # Validate products
     for product in data["products"]:
-        # Ensure required fields exist
         product.setdefault("price", 0)
         product.setdefault("stock", 0)
         product.setdefault("cost", 0)
@@ -155,14 +158,11 @@ def validate_data(data):
         product.setdefault("supplier", "")
         product.setdefault("min_stock", 5)
         product.setdefault("max_stock", 100)
-        product.setdefault("barcode", "")
-        product.setdefault("unit", "piece")
         product.setdefault("sku", "")
         product.setdefault("description", "")
         product.setdefault("status", "active")
         product.setdefault("last_updated", datetime.now().isoformat())
         
-        # Convert string numbers to appropriate types
         numeric_fields = ["price", "stock", "cost", "min_stock", "max_stock"]
         for field in numeric_fields:
             if field in product and isinstance(product[field], str):
@@ -186,7 +186,6 @@ def validate_data(data):
         customer.setdefault("status", "active")
         customer.setdefault("join_date", datetime.now().strftime("%Y-%m-%d"))
         
-        # Convert numeric fields
         if isinstance(customer.get("total_spent"), str):
             try:
                 customer["total_spent"] = float(customer["total_spent"])
@@ -233,23 +232,21 @@ def validate_data(data):
 
 def save_data(data):
     """Save business data to JSON file"""
-    os.makedirs('data', exist_ok=True)
+    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
 @app.route('/')
 def index():
+    """Serve the main application"""
     return render_template('index.html')
 
-# Serve the enhanced HTML file
-@app.route('/template')
-def get_template():
-    # Read the enhanced HTML file
-    with open('templates/enhanced_index.html', 'r') as f:
-        html_content = f.read()
-    return html_content
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
-# PRODUCTS API
+# Products API
 @app.route('/api/products', methods=['GET'])
 def get_products():
     data = load_data()
@@ -260,7 +257,6 @@ def add_product():
     data = load_data()
     product = request.json
     
-    # Validate and set default values
     product.setdefault("price", 0)
     product.setdefault("stock", 0)
     product.setdefault("cost", 0)
@@ -272,7 +268,6 @@ def add_product():
     product.setdefault("description", "")
     product.setdefault("status", "active")
     
-    # Ensure numeric values
     numeric_fields = ["price", "stock", "cost", "min_stock", "max_stock"]
     for field in numeric_fields:
         if field in product and isinstance(product[field], str):
@@ -284,46 +279,11 @@ def add_product():
             except:
                 product[field] = 0
     
-    # Determine stock status
-    stock = product.get("stock", 0)
-    min_stock = product.get("min_stock", 5)
-    
-    if stock <= 0:
-        product["stock_status"] = "out"
-    elif stock <= min_stock:
-        product["stock_status"] = "low"
-    else:
-        product["stock_status"] = "ok"
-    
     product['id'] = max([p['id'] for p in data['products']], default=0) + 1
     product['last_updated'] = datetime.now().isoformat()
     data['products'].append(product)
     save_data(data)
     return jsonify(product), 201
-
-@app.route('/api/products/<int:product_id>', methods=['PUT'])
-def update_product(product_id):
-    data = load_data()
-    for i, product in enumerate(data['products']):
-        if product['id'] == product_id:
-            updates = request.json
-            updates['last_updated'] = datetime.now().isoformat()
-            
-            # Update stock status if stock changed
-            if 'stock' in updates:
-                stock = updates['stock']
-                min_stock = updates.get('min_stock', product.get('min_stock', 5))
-                if stock <= 0:
-                    updates['stock_status'] = "out"
-                elif stock <= min_stock:
-                    updates['stock_status'] = "low"
-                else:
-                    updates['stock_status'] = "ok"
-            
-            data['products'][i].update(updates)
-            save_data(data)
-            return jsonify(data['products'][i])
-    return jsonify({"error": "Product not found"}), 404
 
 @app.route('/api/products/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
@@ -332,7 +292,7 @@ def delete_product(product_id):
     save_data(data)
     return jsonify({"message": "Product deleted"}), 200
 
-# CUSTOMERS API
+# Customers API
 @app.route('/api/customers', methods=['GET'])
 def get_customers():
     data = load_data()
@@ -343,7 +303,6 @@ def add_customer():
     data = load_data()
     customer = request.json
     
-    # Validate and set default values
     customer.setdefault("total_spent", 0)
     customer.setdefault("total_orders", 0)
     customer.setdefault("last_order", "")
@@ -354,34 +313,10 @@ def add_customer():
     customer.setdefault("status", "active")
     customer.setdefault("join_date", datetime.now().strftime("%Y-%m-%d"))
     
-    # Convert numeric fields
-    if isinstance(customer.get("total_spent"), str):
-        try:
-            customer["total_spent"] = float(customer["total_spent"])
-        except:
-            customer["total_spent"] = 0
-    
-    if isinstance(customer.get("total_orders"), str):
-        try:
-            customer["total_orders"] = int(customer["total_orders"])
-        except:
-            customer["total_orders"] = 0
-    
     customer['id'] = max([c['id'] for c in data['customers']], default=0) + 1
     data['customers'].append(customer)
     save_data(data)
     return jsonify(customer), 201
-
-@app.route('/api/customers/<int:customer_id>', methods=['PUT'])
-def update_customer(customer_id):
-    data = load_data()
-    for i, customer in enumerate(data['customers']):
-        if customer['id'] == customer_id:
-            updates = request.json
-            data['customers'][i].update(updates)
-            save_data(data)
-            return jsonify(data['customers'][i])
-    return jsonify({"error": "Customer not found"}), 404
 
 @app.route('/api/customers/<int:customer_id>', methods=['DELETE'])
 def delete_customer(customer_id):
@@ -390,7 +325,7 @@ def delete_customer(customer_id):
     save_data(data)
     return jsonify({"message": "Customer deleted"}), 200
 
-# TRANSACTIONS API
+# Transactions API
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
     data = load_data()
@@ -401,7 +336,6 @@ def add_transaction():
     data = load_data()
     transaction = request.json
     
-    # Validate transaction
     transaction.setdefault("amount", 0)
     transaction.setdefault("customer", "")
     transaction.setdefault("supplier", "")
@@ -412,65 +346,22 @@ def add_transaction():
     
     try:
         transaction["amount"] = float(transaction["amount"])
-    except (ValueError, TypeError):
+    except:
         transaction["amount"] = 0
     
     transaction['id'] = max([t['id'] for t in data['transactions']], default=0) + 1
     transaction['date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Update stock for sales and update customer stats
-    if transaction['type'] == 'sale':
-        if 'customer' in transaction and transaction['customer']:
-            # Find and update customer
-            for customer in data['customers']:
-                if customer['name'] == transaction['customer']:
-                    customer['total_orders'] = customer.get('total_orders', 0) + 1
-                    customer['total_spent'] = customer.get('total_spent', 0) + transaction['amount']
-                    customer['last_order'] = transaction['date'].split()[0]
-                    break
-        
-        if 'items' in transaction:
-            for item in transaction['items']:
-                for product in data['products']:
-                    if product['name'] == item['name']:
-                        quantity = item.get('quantity', 1)
-                        product['stock'] = max(0, product['stock'] - quantity)
-                        
-                        # Update stock status
-                        if product['stock'] <= 0:
-                            product['stock_status'] = "out"
-                        elif product['stock'] <= product.get('min_stock', 5):
-                            product['stock_status'] = "low"
-                        else:
-                            product['stock_status'] = "ok"
-                        break
-    
     data['transactions'].append(transaction)
     save_data(data)
     return jsonify(transaction), 201
 
-# SUPPLIERS API
+# Suppliers API
 @app.route('/api/suppliers', methods=['GET'])
 def get_suppliers():
     data = load_data()
     return jsonify(data['suppliers'])
 
-@app.route('/api/suppliers', methods=['POST'])
-def add_supplier():
-    data = load_data()
-    supplier = request.json
-    
-    supplier.setdefault("products", [])
-    supplier.setdefault("status", "active")
-    supplier.setdefault("address", "")
-    supplier.setdefault("phone", "")
-    
-    supplier['id'] = max([s['id'] for s in data['suppliers']], default=0) + 1
-    data['suppliers'].append(supplier)
-    save_data(data)
-    return jsonify(supplier), 201
-
-# ANALYTICS API - Enhanced for new frontend
+# Analytics API
 @app.route('/api/analytics/sales')
 def get_sales_analytics():
     data = load_data()
@@ -495,11 +386,9 @@ def get_sales_analytics():
                             quantity = item.get('quantity', 1)
                             price = item.get('price', 0)
                             product_sales[item.get('name', 'Unknown')] += quantity * price
-            except Exception as e:
-                print(f"Error processing transaction: {e}")
+            except:
                 continue
     
-    # Fill missing days
     dates = []
     sales = []
     current_date = start_date
@@ -509,7 +398,6 @@ def get_sales_analytics():
         sales.append(daily_sales.get(date_str, 0))
         current_date += timedelta(days=1)
     
-    # Get top products
     top_products = sorted(product_sales.items(), key=lambda x: x[1], reverse=True)[:10]
     
     return jsonify({
@@ -525,32 +413,10 @@ def get_balance():
     data = load_data()
     
     try:
-        # Calculate income from sales
-        income = 0
-        for transaction in data['transactions']:
-            if transaction.get('type') == 'sale':
-                income += transaction.get('amount', 0)
-        
-        # Calculate expenses from purchases and expenses
-        expenses = 0
-        for transaction in data['transactions']:
-            if transaction.get('type') in ['purchase', 'expense']:
-                expenses += transaction.get('amount', 0)
-        
-        # Calculate stock value safely
-        stock_value = 0
-        for product in data['products']:
-            price = product.get('price', 0)
-            stock = product.get('stock', 0)
-            if price is None:
-                price = 0
-            if stock is None:
-                stock = 0
-            stock_value += price * stock
-        
-        # Count active customers
+        income = sum(t.get('amount', 0) for t in data['transactions'] if t.get('type') == 'sale')
+        expenses = sum(t.get('amount', 0) for t in data['transactions'] if t.get('type') in ['purchase', 'expense'])
+        stock_value = sum(p.get('price', 0) * p.get('stock', 0) for p in data['products'])
         active_customers = len([c for c in data['customers'] if c.get('status') == 'active'])
-        
         gross_profit = income - expenses
         
         return jsonify({
@@ -562,8 +428,7 @@ def get_balance():
             'total_active_customers': active_customers,
             'total_products': len(data['products'])
         })
-    except Exception as e:
-        print(f"Error in get_balance: {e}")
+    except:
         return jsonify({
             'income': 0,
             'expenses': 0,
@@ -574,41 +439,7 @@ def get_balance():
             'total_products': 0
         })
 
-@app.route('/api/analytics/customers')
-def get_customer_analytics():
-    data = load_data()
-    
-    # Calculate customer distribution by type
-    customer_types = defaultdict(int)
-    for customer in data['customers']:
-        customer_type = customer.get('type', 'Regular')
-        customer_types[customer_type] += 1
-    
-    # Calculate repeat rate (customers with more than 1 order)
-    repeat_customers = len([c for c in data['customers'] if c.get('total_orders', 0) > 1])
-    repeat_rate = (repeat_customers / len(data['customers']) * 100) if data['customers'] else 0
-    
-    # Calculate average order value
-    total_spent = sum(c.get('total_spent', 0) for c in data['customers'])
-    total_orders = sum(c.get('total_orders', 0) for c in data['customers'])
-    avg_order_value = total_spent / total_orders if total_orders > 0 else 0
-    
-    # Get top customers by total spent
-    top_customers = sorted(data['customers'], key=lambda x: x.get('total_spent', 0), reverse=True)[:5]
-    top_customers_list = [
-        {"name": c['name'], "total_spent": c.get('total_spent', 0), "total_orders": c.get('total_orders', 0)}
-        for c in top_customers
-    ]
-    
-    return jsonify({
-        'customer_distribution': dict(customer_types),
-        'repeat_rate': repeat_rate,
-        'avg_order_value': avg_order_value,
-        'top_customers': top_customers_list,
-        'growth_rate': 12.5  # Placeholder for growth calculation
-    })
-
-# NOTES API
+# Notes API
 @app.route('/api/notes', methods=['GET'])
 def get_notes():
     data = load_data()
@@ -627,23 +458,10 @@ def add_note():
     note['updated_at'] = note['created_at']
     note.setdefault('content', '')
     note.setdefault('category', 'General')
-    note.setdefault('priority', 'medium')
     
     data['notes'].append(note)
     save_data(data)
     return jsonify(note), 201
-
-@app.route('/api/notes/<note_id>', methods=['PUT'])
-def update_note(note_id):
-    data = load_data()
-    for i, note in enumerate(data['notes']):
-        if note['id'] == note_id:
-            updates = request.json
-            updates['updated_at'] = datetime.now().isoformat()
-            data['notes'][i].update(updates)
-            save_data(data)
-            return jsonify(data['notes'][i])
-    return jsonify({"error": "Note not found"}), 404
 
 @app.route('/api/notes/<note_id>', methods=['DELETE'])
 def delete_note(note_id):
@@ -652,33 +470,24 @@ def delete_note(note_id):
     save_data(data)
     return jsonify({"message": "Note deleted"}), 200
 
-# EXPORT API - Enhanced
+# Export API
 @app.route('/api/export/csv/<export_type>')
 def export_csv(export_type):
     data = load_data()
     
     if export_type == 'products':
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=[
-            'id', 'name', 'sku', 'category', 'price', 'cost', 'stock', 
-            'min_stock', 'max_stock', 'supplier', 'status', 'barcode', 'description'
-        ])
+        writer = csv.DictWriter(output, fieldnames=['id', 'name', 'category', 'price', 'stock', 'cost', 'supplier'])
         writer.writeheader()
         for product in data['products']:
             row = {
                 'id': product.get('id', ''),
                 'name': product.get('name', ''),
-                'sku': product.get('sku', ''),
                 'category': product.get('category', ''),
                 'price': product.get('price', 0),
-                'cost': product.get('cost', 0),
                 'stock': product.get('stock', 0),
-                'min_stock': product.get('min_stock', 5),
-                'max_stock': product.get('max_stock', 100),
-                'supplier': product.get('supplier', ''),
-                'status': product.get('status', 'active'),
-                'barcode': product.get('barcode', ''),
-                'description': product.get('description', '')
+                'cost': product.get('cost', 0),
+                'supplier': product.get('supplier', '')
             }
             writer.writerow(row)
         output.seek(0)
@@ -692,11 +501,7 @@ def export_csv(export_type):
     
     elif export_type == 'customers':
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=[
-            'id', 'name', 'email', 'phone', 'type', 'address', 'city', 
-            'country', 'total_orders', 'total_spent', 'last_order', 
-            'status', 'join_date'
-        ])
+        writer = csv.DictWriter(output, fieldnames=['id', 'name', 'email', 'phone', 'type', 'total_orders', 'total_spent', 'status'])
         writer.writeheader()
         for customer in data['customers']:
             row = {
@@ -705,14 +510,9 @@ def export_csv(export_type):
                 'email': customer.get('email', ''),
                 'phone': customer.get('contact', ''),
                 'type': customer.get('type', 'Regular'),
-                'address': customer.get('address', ''),
-                'city': customer.get('city', ''),
-                'country': customer.get('country', 'Kenya'),
                 'total_orders': customer.get('total_orders', 0),
                 'total_spent': customer.get('total_spent', 0),
-                'last_order': customer.get('last_order', ''),
-                'status': customer.get('status', 'active'),
-                'join_date': customer.get('join_date', '')
+                'status': customer.get('status', 'active')
             }
             writer.writerow(row)
         output.seek(0)
@@ -726,10 +526,7 @@ def export_csv(export_type):
     
     elif export_type == 'transactions':
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=[
-            'id', 'date', 'type', 'amount', 'customer', 'supplier', 
-            'description', 'payment_method', 'status', 'items_count'
-        ])
+        writer = csv.DictWriter(output, fieldnames=['id', 'date', 'type', 'amount', 'customer', 'supplier', 'description'])
         writer.writeheader()
         for transaction in data['transactions']:
             row = {
@@ -739,10 +536,7 @@ def export_csv(export_type):
                 'amount': transaction.get('amount', 0),
                 'customer': transaction.get('customer', ''),
                 'supplier': transaction.get('supplier', ''),
-                'description': transaction.get('description', ''),
-                'payment_method': transaction.get('payment_method', 'Cash'),
-                'status': transaction.get('status', 'completed'),
-                'items_count': len(transaction.get('items', []))
+                'description': transaction.get('description', '')
             }
             writer.writerow(row)
         output.seek(0)
@@ -756,15 +550,11 @@ def export_csv(export_type):
     
     return jsonify({"error": "Invalid export type"}), 400
 
-# BACKUP API
+# Backup API
 @app.route('/api/backup')
 def backup_data():
     data = load_data()
-    
-    # Create a clean copy for backup
-    backup_data = validate_data(data.copy())
-    
-    backup_bytes = json.dumps(backup_data, indent=2).encode('utf-8')
+    backup_bytes = json.dumps(data, indent=2).encode('utf-8')
     
     return send_file(
         io.BytesIO(backup_bytes),
@@ -785,39 +575,28 @@ def restore_data():
     if file and file.filename.endswith('.json'):
         try:
             data = json.load(file)
-            # Validate the data before saving
             validated_data = validate_data(data)
             save_data(validated_data)
             return jsonify({"message": "Data restored successfully"}), 200
-        except json.JSONDecodeError:
+        except:
             return jsonify({"error": "Invalid JSON file"}), 400
-        except Exception as e:
-            return jsonify({"error": f"Error restoring data: {str(e)}"}), 400
     
     return jsonify({"error": "Invalid file format. Please upload a JSON file"}), 400
 
-# DASHBOARD DATA API - Combined endpoint for dashboard
+# Dashboard API
 @app.route('/api/dashboard')
 def get_dashboard_data():
-    """Return all data needed for dashboard in one call"""
     data = load_data()
     
-    # Calculate dashboard stats
     total_sales = sum(t.get('amount', 0) for t in data['transactions'] if t.get('type') == 'sale')
     active_customers = len([c for c in data['customers'] if c.get('status') == 'active'])
     stock_value = sum(p.get('price', 0) * p.get('stock', 0) for p in data['products'])
-    
-    # Calculate profit
     expenses = sum(t.get('amount', 0) for t in data['transactions'] if t.get('type') in ['purchase', 'expense'])
     gross_profit = total_sales - expenses
     
-    # Get recent transactions
     recent_transactions = sorted(data['transactions'], key=lambda x: x.get('date', ''), reverse=True)[:5]
-    
-    # Get top customers
     top_customers = sorted(data['customers'], key=lambda x: x.get('total_spent', 0), reverse=True)[:5]
     
-    # Get stock alerts
     stock_alerts = []
     for product in data['products']:
         stock = product.get('stock', 0)
@@ -844,84 +623,46 @@ def get_dashboard_data():
         'stock_alerts': stock_alerts
     })
 
-# Health check endpoint
-@app.route('/health')
-def health_check():
-    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+# Customer Analytics API
+@app.route('/api/analytics/customers')
+def get_customer_analytics():
+    data = load_data()
+    
+    customer_types = defaultdict(int)
+    for customer in data['customers']:
+        customer_type = customer.get('type', 'Regular')
+        customer_types[customer_type] += 1
+    
+    repeat_customers = len([c for c in data['customers'] if c.get('total_orders', 0) > 1])
+    repeat_rate = (repeat_customers / len(data['customers']) * 100) if data['customers'] else 0
+    
+    total_spent = sum(c.get('total_spent', 0) for c in data['customers'])
+    total_orders = sum(c.get('total_orders', 0) for c in data['customers'])
+    avg_order_value = total_spent / total_orders if total_orders > 0 else 0
+    
+    top_customers = sorted(data['customers'], key=lambda x: x.get('total_spent', 0), reverse=True)[:5]
+    top_customers_list = [
+        {"name": c['name'], "total_spent": c.get('total_spent', 0), "total_orders": c.get('total_orders', 0)}
+        for c in top_customers
+    ]
+    
+    return jsonify({
+        'customer_distribution': dict(customer_types),
+        'repeat_rate': repeat_rate,
+        'avg_order_value': avg_order_value,
+        'top_customers': top_customers_list,
+        'growth_rate': 12.5
+    })
 
-# Initialize data directory
 if __name__ == '__main__':
+    # Ensure necessary directories exist
     os.makedirs('data', exist_ok=True)
     os.makedirs('templates', exist_ok=True)
+    os.makedirs('static', exist_ok=True)
     
-    # Save enhanced HTML to templates folder
-    enhanced_html = '''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Suite Pro 2.0 - Complete Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Include all the CSS styles from the enhanced HTML file here */
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --info-color: #17a2b8;
-            --light-bg: #f8f9fa;
-            --dark-bg: #2c3e50;
-            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            --sidebar-width: 260px;
-        }
-        /* ... rest of the CSS styles ... */
-    </style>
-</head>
-<body>
-    <!-- Include the enhanced HTML structure here -->
-    <div class="sidebar">
-        <!-- Sidebar content -->
-    </div>
-    
-    <div class="main-content">
-        <!-- All section content -->
-    </div>
-    
-    <!-- Modals -->
-    <!-- Add Product Modal -->
-    <!-- Add Customer Modal -->
-    <!-- Add Transaction Modal -->
-    <!-- Add Note Modal -->
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Main Application JavaScript -->
-    <script>
-        // Application JavaScript code here
-        // Make sure to update API endpoints to match Flask routes
-        // For example:
-        const API_BASE = '/api';
-        
-        // Update fetch calls to use:
-        // fetch(`${API_BASE}/products`) instead of fetch('/api/products')
-        // fetch(`${API_BASE}/customers`) instead of fetch('/api/customers')
-        // etc.
-    </script>
-</body>
-</html>'''
-    
-    # Create the enhanced HTML file in templates folder
-    with open('templates/enhanced_index.html', 'w') as f:
-        f.write(enhanced_html)
-    
-    # Load data once to ensure file exists
+    # Load data to initialize
     load_data()
-    print("Server starting on http://localhost:5000")
-    print("Access the enhanced interface at: http://localhost:5000")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    
+    # For Render, use the port provided by the environment or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
