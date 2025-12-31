@@ -419,6 +419,43 @@
             background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
             cursor: pointer;
         }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h5 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .empty-state p {
+            max-width: 500px;
+            margin: 0 auto 25px;
+            line-height: 1.6;
+        }
+        
+        .danger-zone {
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+        }
+        
+        .warning-zone {
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff9e6 0%, #fff4d4 100%);
+        }
     </style>
 </head>
 <body>
@@ -484,10 +521,6 @@
                         <i class="fas fa-save"></i>
                         <span class="nav-text">Backup</span>
                     </button>
-                    <button class="btn btn-outline-light btn-sm" onclick="printReport()">
-                        <i class="fas fa-print"></i>
-                        <span class="nav-text">Print</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -500,7 +533,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-1">Dashboard Overview</h2>
-                    <p class="text-muted mb-0">Welcome back! Here's what's happening with your business today.</p>
+                    <p class="text-muted mb-0">Welcome! Add your business data to get started.</p>
                 </div>
                 <div class="d-flex gap-3">
                     <div class="search-box">
@@ -561,21 +594,25 @@
                                 <button class="btn btn-outline-secondary" onclick="changeChartPeriod('quarter')">Quarter</button>
                             </div>
                         </div>
-                        <canvas id="salesChart"></canvas>
+                        <div id="salesChartPlaceholder" class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <h5>No Sales Data Yet</h5>
+                            <p>Add transactions to see sales performance charts</p>
+                            <button class="btn btn-primary" onclick="showAddTransactionModal()">
+                                <i class="fas fa-plus"></i> Add First Transaction
+                            </button>
+                        </div>
+                        <canvas id="salesChart" style="display: none;"></canvas>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="dashboard-card h-100">
                         <h5>Quick Stats</h5>
                         <div id="quick-stats" class="mt-4">
-                            <!-- Stats will be loaded here -->
-                        </div>
-                        <div class="mt-4">
-                            <h6>Inventory Health</h6>
-                            <div class="progress mb-2" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                            <div class="empty-state" style="padding: 20px 0;">
+                                <i class="fas fa-chart-pie" style="font-size: 2.5rem;"></i>
+                                <p>Add business data to see statistics</p>
                             </div>
-                            <small class="text-muted">75% of products have optimal stock</small>
                         </div>
                     </div>
                 </div>
@@ -586,7 +623,15 @@
                 <div class="col-lg-6">
                     <div class="table-container">
                         <h5 class="mb-3">Recent Transactions</h5>
-                        <div class="table-responsive">
+                        <div id="recent-transactions-placeholder" class="empty-state" style="padding: 30px 20px;">
+                            <i class="fas fa-exchange-alt"></i>
+                            <h5>No Transactions Yet</h5>
+                            <p>Start by adding your first transaction</p>
+                            <button class="btn btn-primary mt-2" onclick="showAddTransactionModal()">
+                                <i class="fas fa-plus"></i> Add First Transaction
+                            </button>
+                        </div>
+                        <div class="table-responsive" id="recent-transactions-container" style="display: none;">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
@@ -597,7 +642,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="recent-transactions">
-                                    <!-- Transactions will be loaded here -->
                                 </tbody>
                             </table>
                         </div>
@@ -605,9 +649,16 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="dashboard-card">
-                        <h5 class="mb-3">Top Suppliers</h5>
-                        <div id="top-suppliers">
-                            <!-- Top suppliers will be loaded here -->
+                        <h5 class="mb-3">Top Customers</h5>
+                        <div id="top-customers-placeholder" class="empty-state" style="padding: 30px 20px;">
+                            <i class="fas fa-users"></i>
+                            <h5>No Customers Yet</h5>
+                            <p>Add customers to see top performers</p>
+                            <button class="btn btn-primary mt-2" onclick="showAddCustomerModal()">
+                                <i class="fas fa-user-plus"></i> Add First Customer
+                            </button>
+                        </div>
+                        <div id="top-customers" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -647,7 +698,16 @@
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div id="products-empty-state" class="empty-state">
+                    <i class="fas fa-boxes"></i>
+                    <h5>No Products Yet</h5>
+                    <p>Add your products to start managing inventory. Track stock levels, prices, and supplier information.</p>
+                    <button class="btn btn-primary" onclick="showAddProductModal()">
+                        <i class="fas fa-plus"></i> Add First Product
+                    </button>
+                </div>
+                
+                <div class="table-responsive" id="products-table-container" style="display: none;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -662,7 +722,6 @@
                             </tr>
                         </thead>
                         <tbody id="products-table">
-                            <!-- Products will be loaded here -->
                         </tbody>
                     </table>
                 </div>
@@ -730,7 +789,16 @@
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div id="customers-empty-state" class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h5>No Customers Yet</h5>
+                    <p>Add your customers to track orders, manage relationships, and analyze purchasing patterns.</p>
+                    <button class="btn btn-primary" onclick="showAddCustomerModal()">
+                        <i class="fas fa-user-plus"></i> Add First Customer
+                    </button>
+                </div>
+                
+                <div class="table-responsive" id="customers-table-container" style="display: none;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -744,7 +812,6 @@
                             </tr>
                         </thead>
                         <tbody id="customers-table">
-                            <!-- Customers will be loaded here -->
                         </tbody>
                     </table>
                 </div>
@@ -784,7 +851,16 @@
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div id="transactions-empty-state" class="empty-state">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h5>No Transactions Yet</h5>
+                    <p>Record sales, purchases, and other financial transactions to track your business performance.</p>
+                    <button class="btn btn-primary" onclick="showAddTransactionModal()">
+                        <i class="fas fa-plus"></i> Add First Transaction
+                    </button>
+                </div>
+                
+                <div class="table-responsive" id="transactions-table-container" style="display: none;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -798,7 +874,6 @@
                             </tr>
                         </thead>
                         <tbody id="transactions-table">
-                            <!-- Transactions will be loaded here -->
                         </tbody>
                     </table>
                 </div>
@@ -866,7 +941,16 @@
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div id="suppliers-empty-state" class="empty-state">
+                    <i class="fas fa-truck"></i>
+                    <h5>No Suppliers Yet</h5>
+                    <p>Add your suppliers to manage purchase orders, track deliveries, and maintain supplier relationships.</p>
+                    <button class="btn btn-primary" onclick="showAddSupplierModal()">
+                        <i class="fas fa-plus"></i> Add First Supplier
+                    </button>
+                </div>
+                
+                <div class="table-responsive" id="suppliers-table-container" style="display: none;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -881,7 +965,6 @@
                             </tr>
                         </thead>
                         <tbody id="suppliers-table">
-                            <!-- Suppliers will be loaded here -->
                         </tbody>
                     </table>
                 </div>
@@ -916,14 +999,22 @@
                                 <option value="365">Last Year</option>
                             </select>
                         </div>
-                        <canvas id="analyticsChart"></canvas>
+                        <div id="analyticsChartPlaceholder" class="empty-state">
+                            <i class="fas fa-chart-bar"></i>
+                            <h5>No Analytics Data</h5>
+                            <p>Add transactions and customer data to generate analytics</p>
+                        </div>
+                        <canvas id="analyticsChart" style="display: none;"></canvas>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="dashboard-card h-100">
                         <h5 class="mb-3">Top Products by Revenue</h5>
-                        <div id="top-products">
-                            <!-- Top products will be loaded here -->
+                        <div id="top-products-placeholder" class="empty-state" style="padding: 20px 0;">
+                            <i class="fas fa-box"></i>
+                            <p>Add products and sales to see top performers</p>
+                        </div>
+                        <div id="top-products" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -933,14 +1024,22 @@
                 <div class="col-lg-6">
                     <div class="chart-container">
                         <h5 class="mb-3">Customer Distribution</h5>
-                        <canvas id="customerChart"></canvas>
+                        <div id="customerChartPlaceholder" class="empty-state">
+                            <i class="fas fa-user-chart"></i>
+                            <h5>No Customer Data</h5>
+                            <p>Add customers to see distribution charts</p>
+                        </div>
+                        <canvas id="customerChart" style="display: none;"></canvas>
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="dashboard-card h-100">
                         <h5 class="mb-3">Key Performance Indicators</h5>
-                        <div id="performance-metrics">
-                            <!-- Metrics will be loaded here -->
+                        <div id="performance-metrics-placeholder" class="empty-state" style="padding: 20px 0;">
+                            <i class="fas fa-chart-line"></i>
+                            <p>Add business data to see performance metrics</p>
+                        </div>
+                        <div id="performance-metrics" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -996,8 +1095,16 @@
                 </div>
             </div>
             
-            <div class="row" id="notes-container">
-                <!-- Notes will be loaded here -->
+            <div id="notes-empty-state" class="empty-state">
+                <i class="fas fa-sticky-note"></i>
+                <h5>No Notes Yet</h5>
+                <p>Add notes to keep track of meetings, tasks, ideas, and important business information.</p>
+                <button class="btn btn-primary" onclick="showAddNoteModal()">
+                    <i class="fas fa-plus"></i> Add First Note
+                </button>
+            </div>
+            
+            <div class="row" id="notes-container" style="display: none;">
             </div>
         </div>
         
@@ -1005,10 +1112,10 @@
         <div id="settings-section" style="display: none;">
             <div class="section-header">
                 <h2 class="mb-0">System Settings</h2>
-                        <p class="text-muted mb-0">Configure your business management system</p>
+                <p class="text-muted mb-0">Configure your business management system</p>
             </div>
             
-            <div class="row">
+            <div class="row mb-4">
                 <div class="col-lg-6">
                     <div class="dashboard-card">
                         <h5 class="mb-3">Data Management</h5>
@@ -1040,6 +1147,44 @@
                             <i class="fas fa-upload"></i> Restore from Backup
                         </button>
                         <small class="text-muted">Warning: Restoring will replace all current data with backup data.</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Start Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="dashboard-card warning-zone">
+                        <h5 class="mb-3"><i class="fas fa-rocket text-warning me-2"></i> Quick Start</h5>
+                        <p class="text-muted mb-3">Get started quickly by loading sample data or resetting your system.</p>
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button class="btn btn-warning me-2" onclick="loadSampleData()">
+                                <i class="fas fa-vial"></i> Load Sample Data
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="showQuickStartGuide()">
+                                <i class="fas fa-question-circle"></i> Show Quick Start Guide
+                            </button>
+                        </div>
+                        <small class="text-muted mt-2 d-block">Sample data includes example products, customers, suppliers, and transactions for testing purposes.</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="dashboard-card danger-zone">
+                        <h5 class="mb-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Danger Zone</h5>
+                        <p class="text-muted mb-3">These actions are irreversible. Make sure you have a backup before proceeding.</p>
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-danger" onclick="resetAllData()">
+                                <i class="fas fa-trash-alt"></i> Reset All Data
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="clearSpecificData()">
+                                <i class="fas fa-broom"></i> Clear Specific Data
+                            </button>
+                        </div>
+                        <small class="text-danger mt-2 d-block"><i class="fas fa-exclamation-circle"></i> Warning: These actions cannot be undone. All data will be permanently deleted.</small>
                     </div>
                 </div>
             </div>
@@ -1310,7 +1455,6 @@
                                 </button>
                             </div>
                             <div id="productTagsContainer" class="d-flex flex-wrap gap-2 mt-2">
-                                <!-- Product tags will be added here -->
                             </div>
                             <input type="hidden" id="supplierProducts">
                         </div>
@@ -1354,14 +1498,6 @@
                         <div class="mb-3">
                             <label class="form-label">Notes</label>
                             <textarea class="form-control" id="supplierNotes" rows="3" placeholder="Any additional notes about this supplier"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="supplierSendEmail">
-                                <label class="form-check-label" for="supplierSendEmail">
-                                    Send welcome email to supplier
-                                </label>
-                            </div>
                         </div>
                     </form>
                 </div>
@@ -1411,12 +1547,64 @@
         </div>
     </div>
     
+    <!-- Clear Data Modal -->
+    <div class="modal fade" id="clearDataModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Clear Specific Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Select which data you want to clear:</p>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="clearProducts">
+                        <label class="form-check-label" for="clearProducts">
+                            <strong>Products</strong> - All product inventory data
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="clearCustomers">
+                        <label class="form-check-label" for="clearCustomers">
+                            <strong>Customers</strong> - All customer records
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="clearTransactions">
+                        <label class="form-check-label" for="clearTransactions">
+                            <strong>Transactions</strong> - All sales and purchase records
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="clearSuppliers">
+                        <label class="form-check-label" for="clearSuppliers">
+                            <strong>Suppliers</strong> - All supplier information
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="clearNotes">
+                        <label class="form-check-label" for="clearNotes">
+                            <strong>Notes</strong> - All notes and documentation
+                        </label>
+                    </div>
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i> This action cannot be undone. Make sure you have a backup.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="executeClearData()">Clear Selected Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Main Application JavaScript -->
     <script>
-        // Global variables
+        // Global variables - ALL START EMPTY
         let currentSection = 'dashboard';
         let products = [];
         let customers = [];
@@ -1429,7 +1617,7 @@
         let currentSupplierId = null;
         let supplierProductTags = [];
         
-        // Sample data for demonstration
+        // Sample data for optional loading - NOT loaded by default
         const sampleData = {
             products: [
                 { id: 1, name: "Laptop Pro X1", sku: "LP-001", category: "Electronics", price: 125000, cost: 100000, stock: 15, minStock: 5, maxStock: 50, supplier: "Tech Suppliers Ltd", status: "active", description: "High-performance business laptop" },
@@ -1439,41 +1627,50 @@
                 { id: 5, name: "Desk Lamp", sku: "DL-005", category: "Furniture", price: 3500, cost: 2500, stock: 0, minStock: 5, maxStock: 30, supplier: "Furniture World", status: "out", description: "LED desk lamp" }
             ],
             customers: [
-                { id: 1, name: "John Smith", email: "john@example.com", phone: "+254712345678", type: "VIP", address: "123 Main St", city: "Nairobi", country: "Kenya", totalOrders: 12, totalSpent: 450000, lastOrder: "2024-01-15", status: "active", joinDate: "2023-05-10" },
-                { id: 2, name: "Sarah Johnson", email: "sarah@example.com", phone: "+254723456789", type: "Regular", address: "456 Park Ave", city: "Mombasa", country: "Kenya", totalOrders: 5, totalSpent: 125000, lastOrder: "2024-01-10", status: "active", joinDate: "2023-08-22" },
-                { id: 3, name: "Tech Solutions Ltd", email: "info@techsolutions.co.ke", phone: "+254734567890", type: "Corporate", address: "789 Business Park", city: "Nairobi", country: "Kenya", totalOrders: 8, totalSpent: 320000, lastOrder: "2024-01-12", status: "active", joinDate: "2023-03-15" },
-                { id: 4, name: "Maria Garcia", email: "maria@example.com", phone: "+254745678901", type: "Wholesale", address: "101 Market St", city: "Kisumu", country: "Kenya", totalOrders: 3, totalSpent: 75000, lastOrder: "2023-12-05", status: "inactive", joinDate: "2023-10-01" },
-                { id: 5, name: "Robert Kimani", email: "robert@example.com", phone: "+254756789012", type: "Regular", address: "202 River Rd", city: "Nairobi", country: "Kenya", totalOrders: 7, totalSpent: 189000, lastOrder: "2024-01-14", status: "active", joinDate: "2023-07-18" }
+                { id: 1, name: "John Smith", email: "john@example.com", phone: "+254712345678", type: "VIP", address: "123 Main St", city: "Nairobi", country: "Kenya", totalOrders: 12, totalSpent: 450000, lastOrder: new Date().toISOString().split('T')[0], status: "active", joinDate: "2023-05-10" },
+                { id: 2, name: "Sarah Johnson", email: "sarah@example.com", phone: "+254723456789", type: "Regular", address: "456 Park Ave", city: "Mombasa", country: "Kenya", totalOrders: 5, totalSpent: 125000, lastOrder: new Date().toISOString().split('T')[0], status: "active", joinDate: "2023-08-22" },
+                { id: 3, name: "Tech Solutions Ltd", email: "info@techsolutions.co.ke", phone: "+254734567890", type: "Corporate", address: "789 Business Park", city: "Nairobi", country: "Kenya", totalOrders: 8, totalSpent: 320000, lastOrder: new Date().toISOString().split('T')[0], status: "active", joinDate: "2023-03-15" }
             ],
             transactions: [
-                { id: 1, date: "2024-01-15 14:30", type: "sale", amount: 125000, customer: "John Smith", description: "Laptop Pro X1", paymentMethod: "M-Pesa", status: "completed", items: 1 },
-                { id: 2, date: "2024-01-14 11:15", type: "sale", amount: 8500, customer: "Robert Kimani", description: "Office Chair", paymentMethod: "Cash", status: "completed", items: 1 },
-                { id: 3, date: "2024-01-12 09:45", type: "purchase", amount: 24000, supplier: "Tech Suppliers Ltd", description: "Mouse restock", paymentMethod: "Bank Transfer", status: "completed", items: 10 },
-                { id: 4, date: "2024-01-10 16:20", type: "sale", amount: 35000, customer: "Sarah Johnson", description: "Various items", paymentMethod: "Credit Card", status: "completed", items: 3 },
-                { id: 5, date: "2024-01-08 13:10", type: "refund", amount: 15000, customer: "Maria Garcia", description: "Returned item", paymentMethod: "M-Pesa", status: "completed", items: 1 }
+                { id: 1, date: new Date().toISOString().slice(0, 16), type: "sale", amount: 125000, customer: "John Smith", description: "Laptop Pro X1", paymentMethod: "M-Pesa", status: "completed", items: 1 },
+                { id: 2, date: new Date().toISOString().slice(0, 16), type: "sale", amount: 8500, customer: "Sarah Johnson", description: "Office Chair", paymentMethod: "Cash", status: "completed", items: 1 },
+                { id: 3, date: new Date().toISOString().slice(0, 16), type: "purchase", amount: 24000, supplier: "Tech Suppliers Ltd", description: "Mouse restock", paymentMethod: "Bank Transfer", status: "completed", items: 10 }
             ],
             suppliers: [
                 { id: 1, name: "Tech Suppliers Ltd", contact: "David Wangari", email: "david@techsuppliers.co.ke", phone: "+254711223344", website: "https://techsuppliers.co.ke", products: ["Laptops", "Accessories", "Monitors", "Printers"], address: "123 Tech Street", city: "Nairobi", country: "Kenya", type: "Distributor", paymentTerms: 30, rating: 4, status: "active", notes: "Reliable supplier with good quality products", totalPurchases: 450000, totalOrders: 12, avgDeliveryTime: 3, joinDate: "2023-03-15" },
-                { id: 2, name: "Furniture World", contact: "Susan Atieno", email: "susan@furnitureworld.co.ke", phone: "+254722334455", website: "https://furnitureworld.co.ke", products: ["Chairs", "Desks", "Lamps", "Tables"], address: "456 Furniture Ave", city: "Mombasa", country: "Kenya", type: "Manufacturer", paymentTerms: 45, rating: 5, status: "preferred", notes: "Excellent quality furniture, slightly higher prices", totalPurchases: 280000, totalOrders: 8, avgDeliveryTime: 7, joinDate: "2023-05-20" },
-                { id: 3, name: "Home Appliances Inc", contact: "James Omondi", email: "james@appliances.co.ke", phone: "+254733445566", website: "https://appliances.co.ke", products: ["Kitchen Appliances", "Refrigerators", "Microwaves"], address: "789 Appliance Road", city: "Nairobi", country: "Kenya", type: "Wholesaler", paymentTerms: 60, rating: 3, status: "active", notes: "Good prices but sometimes delayed delivery", totalPurchases: 150000, totalOrders: 5, avgDeliveryTime: 10, joinDate: "2023-08-10" },
-                { id: 4, name: "Office Supplies Co", contact: "Peter Kamau", email: "peter@officesupplies.co.ke", phone: "+254744556677", website: "https://officesupplies.co.ke", products: ["Stationery", "Paper", "Ink Cartridges", "Folders"], address: "101 Office Plaza", city: "Nairobi", country: "Kenya", type: "Retailer", paymentTerms: 30, rating: 4, status: "active", notes: "Fast delivery for office supplies", totalPurchases: 75000, totalOrders: 15, avgDeliveryTime: 2, joinDate: "2023-10-05" },
-                { id: 5, name: "Textile Manufacturers", contact: "Lucy Wanjiru", email: "lucy@textile.co.ke", phone: "+254755667788", website: "https://textile.co.ke", products: ["Fabrics", "Curtains", "Bedding"], address: "202 Textile Lane", city: "Thika", country: "Kenya", type: "Manufacturer", paymentTerms: 90, rating: 2, status: "inactive", notes: "Currently not taking new orders", totalPurchases: 120000, totalOrders: 4, avgDeliveryTime: 14, joinDate: "2023-01-15" }
+                { id: 2, name: "Furniture World", contact: "Susan Atieno", email: "susan@furnitureworld.co.ke", phone: "+254722334455", website: "https://furnitureworld.co.ke", products: ["Chairs", "Desks", "Lamps", "Tables"], address: "456 Furniture Ave", city: "Mombasa", country: "Kenya", type: "Manufacturer", paymentTerms: 45, rating: 5, status: "preferred", notes: "Excellent quality furniture, slightly higher prices", totalPurchases: 280000, totalOrders: 8, avgDeliveryTime: 7, joinDate: "2023-05-20" }
             ],
             notes: [
-                { id: 1, title: "Meeting with Tech Suppliers", content: "Discuss new product line and pricing for Q2 2024", category: "Meeting", date: "2024-01-10", priority: "high" },
-                { id: 2, title: "Inventory Audit", content: "Need to conduct physical inventory count by end of month", category: "Task", date: "2024-01-08", priority: "medium" },
-                { id: 3, title: "Marketing Campaign", content: "Plan for social media campaign targeting corporate clients", category: "Idea", date: "2024-01-05", priority: "low" }
+                { id: 1, title: "Meeting with Tech Suppliers", content: "Discuss new product line and pricing for Q2 2024", category: "Meeting", date: new Date().toISOString().split('T')[0], priority: "high" },
+                { id: 2, title: "Inventory Audit", content: "Need to conduct physical inventory count by end of month", category: "Task", date: new Date().toISOString().split('T')[0], priority: "medium" }
             ]
         };
         
-        // Initialize application
+        // Initialize application - ALL DATA STARTS EMPTY
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize with sample data
-            products = sampleData.products;
-            customers = sampleData.customers;
-            transactions = sampleData.transactions;
-            suppliers = sampleData.suppliers;
-            notes = sampleData.notes;
+            // Initialize with EMPTY arrays - NO sample data
+            products = [];
+            customers = [];
+            transactions = [];
+            suppliers = [];
+            notes = [];
+            
+            // Check if there's saved data in localStorage
+            const savedData = localStorage.getItem('businessSuiteData');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    if (parsedData.products) products = parsedData.products;
+                    if (parsedData.customers) customers = parsedData.customers;
+                    if (parsedData.transactions) transactions = parsedData.transactions;
+                    if (parsedData.suppliers) suppliers = parsedData.suppliers;
+                    if (parsedData.notes) notes = parsedData.notes;
+                    
+                    showAlert('Previous session data loaded from browser storage', 'info');
+                } catch (e) {
+                    console.error('Error loading saved data:', e);
+                }
+            }
             
             // Load initial data
             loadDashboard();
@@ -1488,12 +1685,41 @@
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('transactionDate').value = now.toISOString().slice(0, 16);
             
+            // Auto-save data periodically
+            setInterval(saveToLocalStorage, 30000); // Save every 30 seconds
+            
             // Initialize tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
+            
+            // Show welcome message for first-time users
+            if (!localStorage.getItem('businessSuiteFirstRun')) {
+                setTimeout(() => {
+                    showAlert('Welcome to Business Suite Pro! Start by adding your products, customers, and suppliers.', 'info');
+                    localStorage.setItem('businessSuiteFirstRun', 'true');
+                }, 1000);
+            }
         });
+        
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            const dataToSave = {
+                products: products,
+                customers: customers,
+                transactions: transactions,
+                suppliers: suppliers,
+                notes: notes,
+                lastSave: new Date().toISOString()
+            };
+            
+            try {
+                localStorage.setItem('businessSuiteData', JSON.stringify(dataToSave));
+            } catch (e) {
+                console.error('Error saving data:', e);
+            }
+        }
         
         // Navigation
         function showSection(section) {
@@ -1541,8 +1767,15 @@
             document.getElementById('customer-count').textContent = activeCustomers;
             document.getElementById('supplier-count').textContent = activeSuppliers;
             
-            // Create sales chart
-            createSalesChart();
+            // Show/hide sales chart based on data
+            if (transactions.filter(t => t.type === 'sale').length > 0) {
+                document.getElementById('salesChartPlaceholder').style.display = 'none';
+                document.getElementById('salesChart').style.display = 'block';
+                createSalesChart();
+            } else {
+                document.getElementById('salesChartPlaceholder').style.display = 'block';
+                document.getElementById('salesChart').style.display = 'none';
+            }
             
             // Load recent transactions
             loadRecentTransactions();
@@ -1550,24 +1783,37 @@
             // Load quick stats
             loadQuickStats();
             
-            // Load top suppliers
-            loadTopSuppliers();
+            // Load top customers
+            loadTopCustomers();
         }
         
         function createSalesChart() {
             const ctx = document.getElementById('salesChart').getContext('2d');
             if (salesChart) salesChart.destroy();
             
-            // Sample sales data for last 7 days
-            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const salesData = [12000, 19000, 15000, 25000, 22000, 18000, 28000];
+            // Get sales data from transactions
+            const salesTransactions = transactions.filter(t => t.type === 'sale');
+            
+            if (salesTransactions.length === 0) {
+                return;
+            }
+            
+            // Group by date (simplified - in real app would group by day/week/month)
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const salesData = [0, 0, 0, 0];
+            
+            // Distribute sales across weeks for demo
+            salesTransactions.forEach(transaction => {
+                const weekIndex = Math.min(Math.floor(Math.random() * 4), 3);
+                salesData[weekIndex] += transaction.amount / 1000; // Scale down for chart
+            });
             
             salesChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Daily Sales (KES)',
+                        label: 'Weekly Sales (KES)',
                         data: salesData,
                         borderColor: '#3498db',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
@@ -1598,7 +1844,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return 'KES ' + value.toLocaleString();
+                                    return 'KES ' + (value * 1000).toLocaleString();
                                 },
                                 font: { size: 11 }
                             },
@@ -1613,7 +1859,19 @@
         }
         
         function loadRecentTransactions() {
+            const container = document.getElementById('recent-transactions-container');
+            const placeholder = document.getElementById('recent-transactions-placeholder');
             const table = document.getElementById('recent-transactions');
+            
+            if (transactions.length === 0) {
+                container.style.display = 'none';
+                placeholder.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            placeholder.style.display = 'none';
+            
             const recent = transactions.slice(-5).reverse();
             
             table.innerHTML = '';
@@ -1638,6 +1896,11 @@
         
         function loadQuickStats() {
             const container = document.getElementById('quick-stats');
+            
+            if (products.length === 0 && customers.length === 0 && suppliers.length === 0) {
+                return;
+            }
+            
             const stats = [
                 { label: 'Active Products', value: products.filter(p => p.status === 'active').length, icon: 'fa-box' },
                 { label: 'Low Stock Items', value: products.filter(p => p.status === 'low').length, icon: 'fa-exclamation-triangle', color: 'text-warning' },
@@ -1660,26 +1923,37 @@
             container.innerHTML = html;
         }
         
-        function loadTopSuppliers() {
-            const container = document.getElementById('top-suppliers');
-            const topSuppliers = suppliers
-                .filter(s => s.status === 'active' || s.status === 'preferred')
-                .sort((a, b) => b.totalPurchases - a.totalPurchases)
+        function loadTopCustomers() {
+            const container = document.getElementById('top-customers');
+            const placeholder = document.getElementById('top-customers-placeholder');
+            
+            if (customers.length === 0) {
+                container.style.display = 'none';
+                placeholder.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            const topCustomers = customers
+                .filter(c => c.status === 'active')
+                .sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0))
                 .slice(0, 5);
             
             let html = '';
-            topSuppliers.forEach(supplier => {
-                const initials = supplier.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            topCustomers.forEach(customer => {
+                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase();
                 html += `
                     <div class="d-flex align-items-center mb-3">
-                        <div class="supplier-avatar me-3">
+                        <div class="avatar me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
                             ${initials.substring(0, 2)}
                         </div>
                         <div class="flex-grow-1">
-                            <div class="fw-bold">${supplier.name}</div>
-                            <small class="text-muted">KES ${supplier.totalPurchases.toLocaleString()} purchases</small>
+                            <div class="fw-bold">${customer.name}</div>
+                            <small class="text-muted">KES ${(customer.totalSpent || 0).toLocaleString()} spent</small>
                         </div>
-                        <div class="badge bg-success">${supplier.type}</div>
+                        <div class="badge bg-success">${customer.type}</div>
                     </div>
                 `;
             });
@@ -1689,13 +1963,22 @@
         // Products Functions
         function loadProducts() {
             const table = document.getElementById('products-table');
+            const container = document.getElementById('products-table-container');
+            const emptyState = document.getElementById('products-empty-state');
+            
+            if (products.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
             table.innerHTML = '';
             
             products.forEach(product => {
-                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= product.minStock ? 'badge-warning' : 'badge-ok';
-                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= product.minStock ? 'Low Stock' : 'In Stock';
-                const profit = product.price - product.cost;
-                const profitMargin = ((profit / product.cost) * 100).toFixed(1);
+                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= (product.minStock || 5) ? 'badge-warning' : 'badge-ok';
+                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= (product.minStock || 5) ? 'Low Stock' : 'In Stock';
                 
                 const row = `
                     <tr>
@@ -1710,7 +1993,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td><code>${product.sku}</code></td>
+                        <td><code>${product.sku || 'N/A'}</code></td>
                         <td><span class="badge bg-secondary">${product.category}</span></td>
                         <td class="fw-bold">KES ${product.price.toLocaleString()}</td>
                         <td>KES ${product.cost.toLocaleString()}</td>
@@ -1739,19 +2022,230 @@
             });
         }
         
+        function searchProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const filtered = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.sku && product.sku.toLowerCase().includes(searchTerm)) ||
+                (product.category && product.category.toLowerCase().includes(searchTerm)) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm))
+            );
+            
+            const table = document.getElementById('products-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No products found matching your search</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(product => {
+                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= product.minStock ? 'badge-warning' : 'badge-ok';
+                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= product.minStock ? 'Low Stock' : 'In Stock';
+                
+                const row = `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td><code>${product.sku || 'N/A'}</code></td>
+                        <td><span class="badge bg-secondary">${product.category}</span></td>
+                        <td class="fw-bold">KES ${product.price.toLocaleString()}</td>
+                        <td>KES ${product.cost.toLocaleString()}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${product.stock}</span>
+                                <span class="badge ${stockStatus}">${statusText}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editProduct(${product.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteProduct(${product.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function filterProducts(type) {
+            let filtered = products;
+            if (type === 'low') {
+                filtered = products.filter(p => p.stock <= (p.minStock || 5) && p.stock > 0);
+            } else if (type === 'out') {
+                filtered = products.filter(p => p.stock <= 0);
+            } else if (type === 'active') {
+                filtered = products.filter(p => p.status === 'active');
+            }
+            
+            const table = document.getElementById('products-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fas fa-filter fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No ${type === 'low' ? 'low stock' : type === 'out' ? 'out of stock' : 'active'} products found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(product => {
+                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= product.minStock ? 'badge-warning' : 'badge-ok';
+                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= product.minStock ? 'Low Stock' : 'In Stock';
+                
+                const row = `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td><code>${product.sku || 'N/A'}</code></td>
+                        <td><span class="badge bg-secondary">${product.category}</span></td>
+                        <td class="fw-bold">KES ${product.price.toLocaleString()}</td>
+                        <td>KES ${product.cost.toLocaleString()}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${product.stock}</span>
+                                <span class="badge ${stockStatus}">${statusText}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editProduct(${product.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteProduct(${product.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function showAddProductModal() {
+            // Populate supplier dropdown
+            const supplierSelect = document.getElementById('productSupplier');
+            supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+            suppliers.forEach(supplier => {
+                supplierSelect.innerHTML += `<option value="${supplier.name}">${supplier.name}</option>`;
+            });
+            
+            document.getElementById('productForm').reset();
+            new bootstrap.Modal(document.getElementById('addProductModal')).show();
+        }
+        
+        function saveProduct() {
+            const product = {
+                id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
+                name: document.getElementById('productName').value,
+                sku: document.getElementById('productSKU').value || `PROD-${Date.now().toString().slice(-6)}`,
+                category: document.getElementById('productCategory').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                cost: parseFloat(document.getElementById('productCost').value),
+                stock: parseInt(document.getElementById('productStock').value),
+                minStock: parseInt(document.getElementById('productMinStock').value) || 5,
+                maxStock: parseInt(document.getElementById('productMaxStock').value) || 100,
+                supplier: document.getElementById('productSupplier').value || '',
+                description: document.getElementById('productDescription').value,
+                status: 'active'
+            };
+            
+            // Determine stock status
+            if (product.stock <= 0) {
+                product.status = 'out';
+            } else if (product.stock <= product.minStock) {
+                product.status = 'low';
+            }
+            
+            products.push(product);
+            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+            loadProducts();
+            loadDashboard();
+            saveToLocalStorage();
+            showAlert('Product added successfully!', 'success');
+        }
+        
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productSKU').value = product.sku || '';
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productCost').value = product.cost;
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productMinStock').value = product.minStock || 5;
+                document.getElementById('productMaxStock').value = product.maxStock || 100;
+                document.getElementById('productSupplier').value = product.supplier || '';
+                document.getElementById('productDescription').value = product.description || '';
+                
+                new bootstrap.Modal(document.getElementById('addProductModal')).show();
+                showAlert('Edit mode activated. Update the product details.', 'info');
+            }
+        }
+        
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                const index = products.findIndex(p => p.id === productId);
+                if (index > -1) {
+                    products.splice(index, 1);
+                    loadProducts();
+                    loadDashboard();
+                    saveToLocalStorage();
+                    showAlert('Product deleted successfully!', 'success');
+                }
+            }
+        }
+        
         // Customers Functions
         function loadCustomers() {
             const table = document.getElementById('customers-table');
+            const container = document.getElementById('customers-table-container');
+            const emptyState = document.getElementById('customers-empty-state');
+            
+            if (customers.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
             table.innerHTML = '';
             
             // Update customer stats
             const activeCustomers = customers.filter(c => c.status === 'active').length;
-            const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-            const avgOrderValue = totalSpent / customers.reduce((sum, c) => sum + c.totalOrders, 0);
-            const repeatRate = (customers.filter(c => c.totalOrders > 1).length / customers.length * 100).toFixed(1);
+            const totalSpent = customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+            const totalOrders = customers.reduce((sum, c) => sum + (c.totalOrders || 0), 0);
+            const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+            const repeatRate = customers.length > 0 ? 
+                (customers.filter(c => (c.totalOrders || 0) > 1).length / customers.length * 100).toFixed(1) : 0;
             
             document.getElementById('total-active-customers').textContent = activeCustomers;
-            document.getElementById('customer-growth').textContent = '+12.5%';
+            document.getElementById('customer-growth').textContent = '+0%';
             document.getElementById('avg-order-value').textContent = `KES ${avgOrderValue.toFixed(0).toLocaleString()}`;
             document.getElementById('repeat-rate').textContent = `${repeatRate}%`;
             
@@ -1782,12 +2276,12 @@
                         </td>
                         <td>
                             <div class="text-center">
-                                <div class="fw-bold fs-5">${customer.totalOrders}</div>
+                                <div class="fw-bold fs-5">${customer.totalOrders || 0}</div>
                                 <small class="text-muted">orders</small>
                             </div>
                         </td>
-                        <td class="fw-bold">KES ${customer.totalSpent.toLocaleString()}</td>
-                        <td>${new Date(customer.lastOrder).toLocaleDateString()}</td>
+                        <td class="fw-bold">KES ${(customer.totalSpent || 0).toLocaleString()}</td>
+                        <td>${customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'Never'}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <span class="status-indicator ${statusClass}"></span>
@@ -1795,17 +2289,13 @@
                             </div>
                         </td>
                         <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Actions
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editCustomer(${customer.id})">
+                                    <i class="fas fa-edit"></i>
                                 </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="viewCustomerDetails(${customer.id})"><i class="fas fa-eye me-2"></i>View Details</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="editCustomer(${customer.id})"><i class="fas fa-edit me-2"></i>Edit</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="sendCustomerEmail(${customer.id})"><i class="fas fa-envelope me-2"></i>Send Email</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteCustomer(${customer.id})"><i class="fas fa-trash me-2"></i>Delete</a></li>
-                                </ul>
+                                <button class="btn btn-outline-danger" onclick="deleteCustomer(${customer.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -1814,9 +2304,226 @@
             });
         }
         
+        function searchCustomers() {
+            const searchTerm = document.getElementById('customerSearch').value.toLowerCase();
+            const filtered = customers.filter(customer => 
+                customer.name.toLowerCase().includes(searchTerm) ||
+                customer.email.toLowerCase().includes(searchTerm) ||
+                customer.phone.includes(searchTerm) ||
+                customer.type.toLowerCase().includes(searchTerm) ||
+                (customer.city && customer.city.toLowerCase().includes(searchTerm))
+            );
+            
+            const table = document.getElementById('customers-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No customers found matching your search</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(customer => {
+                const statusClass = customer.status === 'active' ? 'status-active' : 'status-inactive';
+                const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
+                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                                    ${initials.substring(0, 2)}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">${customer.name}</div>
+                                    <small class="text-muted">${customer.type} Customer</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>${customer.email}</div>
+                            <small class="text-muted">${customer.phone}</small>
+                        </td>
+                        <td>${customer.totalOrders || 0}</td>
+                        <td class="fw-bold">KES ${(customer.totalSpent || 0).toLocaleString()}</td>
+                        <td>${customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'Never'}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator ${statusClass}"></span>
+                                <span>${statusText}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editCustomer(${customer.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteCustomer(${customer.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function filterCustomers(type) {
+            let filtered = customers;
+            if (type === 'active') {
+                filtered = customers.filter(c => c.status === 'active');
+            } else if (type === 'inactive') {
+                filtered = customers.filter(c => c.status === 'inactive');
+            } else if (type === 'vip') {
+                filtered = customers.filter(c => c.type === 'VIP');
+            }
+            
+            const table = document.getElementById('customers-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-filter fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No ${type} customers found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(customer => {
+                const statusClass = customer.status === 'active' ? 'status-active' : 'status-inactive';
+                const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
+                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                                    ${initials.substring(0, 2)}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">${customer.name}</div>
+                                    <small class="text-muted">${customer.type} Customer</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>${customer.email}</div>
+                            <small class="text-muted">${customer.phone}</small>
+                        </td>
+                        <td>${customer.totalOrders || 0}</td>
+                        <td class="fw-bold">KES ${(customer.totalSpent || 0).toLocaleString()}</td>
+                        <td>${customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'Never'}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator ${statusClass}"></span>
+                                <span>${statusText}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editCustomer(${customer.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteCustomer(${customer.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function showAddCustomerModal() {
+            document.getElementById('customerForm').reset();
+            new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
+        }
+        
+        function saveCustomer() {
+            const customer = {
+                id: customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1,
+                name: document.getElementById('customerName').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value,
+                type: document.getElementById('customerType').value,
+                address: document.getElementById('customerAddress').value,
+                city: document.getElementById('customerCity').value,
+                country: document.getElementById('customerCountry').value,
+                totalOrders: 0,
+                totalSpent: 0,
+                lastOrder: null,
+                status: document.getElementById('customerActive').checked ? 'active' : 'inactive',
+                joinDate: new Date().toISOString().split('T')[0]
+            };
+            
+            customers.push(customer);
+            bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
+            loadCustomers();
+            loadDashboard();
+            saveToLocalStorage();
+            showAlert('Customer added successfully!', 'success');
+        }
+        
+        function editCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                document.getElementById('customerName').value = customer.name;
+                document.getElementById('customerEmail').value = customer.email;
+                document.getElementById('customerPhone').value = customer.phone;
+                document.getElementById('customerType').value = customer.type;
+                document.getElementById('customerAddress').value = customer.address || '';
+                document.getElementById('customerCity').value = customer.city || '';
+                document.getElementById('customerCountry').value = customer.country || 'Kenya';
+                document.getElementById('customerActive').checked = customer.status === 'active';
+                
+                new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
+                showAlert('Edit mode activated. Update the customer details.', 'info');
+            }
+        }
+        
+        function deleteCustomer(customerId) {
+            if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+                const index = customers.findIndex(c => c.id === customerId);
+                if (index > -1) {
+                    customers.splice(index, 1);
+                    loadCustomers();
+                    loadDashboard();
+                    saveToLocalStorage();
+                    showAlert('Customer deleted successfully!', 'success');
+                }
+            }
+        }
+        
         // Transactions Functions
         function loadTransactions() {
             const table = document.getElementById('transactions-table');
+            const container = document.getElementById('transactions-table-container');
+            const emptyState = document.getElementById('transactions-empty-state');
+            
+            if (transactions.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
             table.innerHTML = '';
             
             transactions.forEach(transaction => {
@@ -1854,9 +2561,265 @@
             });
         }
         
+        function searchTransactions() {
+            const searchTerm = document.getElementById('transactionSearch').value.toLowerCase();
+            const filtered = transactions.filter(transaction => 
+                (transaction.customer && transaction.customer.toLowerCase().includes(searchTerm)) ||
+                (transaction.supplier && transaction.supplier.toLowerCase().includes(searchTerm)) ||
+                transaction.description.toLowerCase().includes(searchTerm) ||
+                transaction.type.toLowerCase().includes(searchTerm) ||
+                transaction.amount.toString().includes(searchTerm)
+            );
+            
+            const table = document.getElementById('transactions-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No transactions found matching your search</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(transaction => {
+                const typeBadge = transaction.type === 'sale' ? 
+                    '<span class="badge bg-success">Sale</span>' : 
+                    transaction.type === 'purchase' ? 
+                    '<span class="badge bg-warning">Purchase</span>' : 
+                    '<span class="badge bg-danger">Refund</span>';
+                
+                const statusBadge = transaction.status === 'completed' ? 
+                    '<span class="badge bg-success">Completed</span>' : 
+                    '<span class="badge bg-warning">Pending</span>';
+                
+                const row = `
+                    <tr>
+                        <td>${new Date(transaction.date).toLocaleString()}</td>
+                        <td>${typeBadge}</td>
+                        <td class="fw-bold">KES ${transaction.amount.toLocaleString()}</td>
+                        <td>${transaction.customer || transaction.supplier || '-'}</td>
+                        <td>${transaction.items || 1} item(s)</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="viewTransaction(${transaction.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function filterTransactions(type) {
+            let filtered = transactions;
+            if (type !== 'all') {
+                filtered = transactions.filter(t => t.type === type);
+            }
+            
+            const table = document.getElementById('transactions-table');
+            
+            if (filtered.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-filter fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No ${type} transactions found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            table.innerHTML = '';
+            
+            filtered.forEach(transaction => {
+                const typeBadge = transaction.type === 'sale' ? 
+                    '<span class="badge bg-success">Sale</span>' : 
+                    transaction.type === 'purchase' ? 
+                    '<span class="badge bg-warning">Purchase</span>' : 
+                    '<span class="badge bg-danger">Refund</span>';
+                
+                const statusBadge = transaction.status === 'completed' ? 
+                    '<span class="badge bg-success">Completed</span>' : 
+                    '<span class="badge bg-warning">Pending</span>';
+                
+                const row = `
+                    <tr>
+                        <td>${new Date(transaction.date).toLocaleString()}</td>
+                        <td>${typeBadge}</td>
+                        <td class="fw-bold">KES ${transaction.amount.toLocaleString()}</td>
+                        <td>${transaction.customer || transaction.supplier || '-'}</td>
+                        <td>${transaction.items || 1} item(s)</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="viewTransaction(${transaction.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+        
+        function showAddTransactionModal() {
+            // Populate customer dropdown
+            const customerSelect = document.getElementById('transactionCustomer');
+            customerSelect.innerHTML = '<option value="">Select Customer</option>';
+            customers.forEach(customer => {
+                customerSelect.innerHTML += `<option value="${customer.name}">${customer.name}</option>`;
+            });
+            
+            // Set default date to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('transactionDate').value = now.toISOString().slice(0, 16);
+            
+            document.getElementById('transactionForm').reset();
+            new bootstrap.Modal(document.getElementById('addTransactionModal')).show();
+        }
+        
+        function toggleTransactionFields() {
+            const type = document.getElementById('transactionType').value;
+            const label = document.getElementById('customerLabel');
+            const select = document.getElementById('transactionCustomer');
+            
+            if (type === 'purchase' || type === 'expense') {
+                label.textContent = 'Supplier *';
+                select.innerHTML = '<option value="">Select Supplier</option>';
+                suppliers.forEach(supplier => {
+                    select.innerHTML += `<option value="${supplier.name}">${supplier.name}</option>`;
+                });
+            } else {
+                label.textContent = 'Customer *';
+                select.innerHTML = '<option value="">Select Customer</option>';
+                customers.forEach(customer => {
+                    select.innerHTML += `<option value="${customer.name}">${customer.name}</option>`;
+                });
+            }
+        }
+        
+        function saveTransaction() {
+            const type = document.getElementById('transactionType').value;
+            const transaction = {
+                id: transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1,
+                type: type,
+                date: document.getElementById('transactionDate').value,
+                amount: parseFloat(document.getElementById('transactionAmount').value),
+                description: document.getElementById('transactionDescription').value,
+                paymentMethod: document.getElementById('transactionPaymentMethod').value,
+                status: 'completed'
+            };
+            
+            if (type === 'sale' || type === 'refund') {
+                transaction.customer = document.getElementById('transactionCustomer').value;
+            } else {
+                transaction.supplier = document.getElementById('transactionCustomer').value;
+                
+                // Update supplier purchase history if it's a purchase
+                if (type === 'purchase') {
+                    const supplierName = document.getElementById('transactionCustomer').value;
+                    const supplier = suppliers.find(s => s.name === supplierName);
+                    if (supplier) {
+                        supplier.totalOrders = (supplier.totalOrders || 0) + 1;
+                        supplier.totalPurchases = (supplier.totalPurchases || 0) + transaction.amount;
+                    }
+                }
+            }
+            
+            // Update customer stats if it's a sale
+            if (type === 'sale') {
+                const customerName = document.getElementById('transactionCustomer').value;
+                const customer = customers.find(c => c.name === customerName);
+                if (customer) {
+                    customer.totalOrders = (customer.totalOrders || 0) + 1;
+                    customer.totalSpent = (customer.totalSpent || 0) + transaction.amount;
+                    customer.lastOrder = new Date().toISOString().split('T')[0];
+                }
+            }
+            
+            transactions.push(transaction);
+            bootstrap.Modal.getInstance(document.getElementById('addTransactionModal')).hide();
+            loadTransactions();
+            loadDashboard();
+            loadCustomers();
+            loadSuppliers();
+            saveToLocalStorage();
+            showAlert('Transaction added successfully!', 'success');
+        }
+        
+        function viewTransaction(transactionId) {
+            const transaction = transactions.find(t => t.id === transactionId);
+            if (transaction) {
+                alert(`Transaction Details:\n\nDate: ${new Date(transaction.date).toLocaleString()}\nType: ${transaction.type}\nAmount: KES ${transaction.amount.toLocaleString()}\nCustomer/Supplier: ${transaction.customer || transaction.supplier || 'N/A'}\nDescription: ${transaction.description}\nPayment Method: ${transaction.paymentMethod}\nStatus: ${transaction.status}`);
+            }
+        }
+        
+        function deleteTransaction(transactionId) {
+            if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+                const index = transactions.findIndex(t => t.id === transactionId);
+                if (index > -1) {
+                    // If it's a sale, update customer stats
+                    const transaction = transactions[index];
+                    if (transaction.type === 'sale' && transaction.customer) {
+                        const customer = customers.find(c => c.name === transaction.customer);
+                        if (customer) {
+                            customer.totalOrders = Math.max(0, (customer.totalOrders || 0) - 1);
+                            customer.totalSpent = Math.max(0, (customer.totalSpent || 0) - transaction.amount);
+                        }
+                    }
+                    
+                    // If it's a purchase, update supplier stats
+                    if (transaction.type === 'purchase' && transaction.supplier) {
+                        const supplier = suppliers.find(s => s.name === transaction.supplier);
+                        if (supplier) {
+                            supplier.totalOrders = Math.max(0, (supplier.totalOrders || 0) - 1);
+                            supplier.totalPurchases = Math.max(0, (supplier.totalPurchases || 0) - transaction.amount);
+                        }
+                    }
+                    
+                    transactions.splice(index, 1);
+                    loadTransactions();
+                    loadDashboard();
+                    loadCustomers();
+                    loadSuppliers();
+                    saveToLocalStorage();
+                    showAlert('Transaction deleted successfully!', 'success');
+                }
+            }
+        }
+        
         // SUPPLIERS FUNCTIONS - DYNAMIC AND EDITABLE
         function loadSuppliers() {
             const table = document.getElementById('suppliers-table');
+            const container = document.getElementById('suppliers-table-container');
+            const emptyState = document.getElementById('suppliers-empty-state');
+            
+            if (suppliers.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
             table.innerHTML = '';
             
             // Update supplier stats
@@ -1940,20 +2903,6 @@
                 `;
                 table.innerHTML += row;
             });
-            
-            if (suppliers.length === 0) {
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center py-5">
-                            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No suppliers found. Add your first supplier to get started.</p>
-                            <button class="btn btn-primary mt-2" onclick="showAddSupplierModal()">
-                                <i class="fas fa-plus"></i> Add First Supplier
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }
         }
         
         function getRatingStars(rating) {
@@ -1986,8 +2935,6 @@
                 (supplier.type && supplier.type.toLowerCase().includes(searchTerm))
             );
             
-            table.innerHTML = '';
-            
             if (filteredSuppliers.length === 0) {
                 table.innerHTML = `
                     <tr>
@@ -1999,6 +2946,8 @@
                 `;
                 return;
             }
+            
+            table.innerHTML = '';
             
             filteredSuppliers.forEach(supplier => {
                 const statusBadge = supplier.status === 'active' ? 
@@ -2079,7 +3028,6 @@
             }
             
             const table = document.getElementById('suppliers-table');
-            table.innerHTML = '';
             
             if (filtered.length === 0) {
                 table.innerHTML = `
@@ -2092,6 +3040,8 @@
                 `;
                 return;
             }
+            
+            table.innerHTML = '';
             
             filtered.forEach(supplier => {
                 const statusBadge = supplier.status === 'active' ? 
@@ -2210,22 +3160,19 @@
                 `;
                 container.appendChild(tag);
             });
-            
-            // Update hidden field
-            document.getElementById('supplierProducts').value = JSON.stringify(supplierProductTags);
         }
         
         function saveSupplier() {
             const supplierId = document.getElementById('supplierId').value;
             const supplier = {
-                id: supplierId ? parseInt(supplierId) : suppliers.length + 1,
+                id: supplierId ? parseInt(supplierId) : (suppliers.length > 0 ? Math.max(...suppliers.map(s => s.id)) + 1 : 1),
                 name: document.getElementById('supplierName').value,
                 contact: document.getElementById('supplierContact').value,
                 email: document.getElementById('supplierEmail').value,
                 phone: document.getElementById('supplierPhone').value,
                 website: document.getElementById('supplierWebsite').value,
                 type: document.getElementById('supplierType').value,
-                products: supplierProductTags,
+                products: [...supplierProductTags],
                 address: document.getElementById('supplierAddress').value,
                 city: document.getElementById('supplierCity').value,
                 country: document.getElementById('supplierCountry').value,
@@ -2271,11 +3218,7 @@
             bootstrap.Modal.getInstance(document.getElementById('addSupplierModal')).hide();
             loadSuppliers();
             loadDashboard();
-            
-            // If send email was checked
-            if (document.getElementById('supplierSendEmail').checked && !supplierId) {
-                showAlert(`Welcome email would be sent to ${supplier.email}`, 'info');
-            }
+            saveToLocalStorage();
         }
         
         function editSupplier(supplierId) {
@@ -2398,6 +3341,7 @@
                 suppliers.splice(index, 1);
                 loadSuppliers();
                 loadDashboard();
+                saveToLocalStorage();
                 showAlert('Supplier deleted successfully!', 'success');
             }
         }
@@ -2409,21 +3353,14 @@
                 productSupplierSelect.innerHTML = '<option value="">Select Supplier</option>' +
                     suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
             }
-            
-            // Update supplier dropdown in transaction modal
-            const transactionCustomerSelect = document.getElementById('transactionCustomer');
-            if (transactionCustomerSelect) {
-                // This function is called from other parts, so we need to check
-                // if we're in purchase mode to update supplier options
-                const type = document.getElementById('transactionType')?.value;
-                if (type === 'purchase') {
-                    transactionCustomerSelect.innerHTML = '<option value="">Select Supplier</option>' +
-                        suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-                }
-            }
         }
         
         function exportSuppliers() {
+            if (suppliers.length === 0) {
+                showAlert('No suppliers to export', 'warning');
+                return;
+            }
+            
             const dataStr = JSON.stringify(suppliers, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = `suppliers_export_${new Date().toISOString().split('T')[0]}.json`;
@@ -2437,6 +3374,11 @@
         }
         
         function generateSupplierReport() {
+            if (suppliers.length === 0) {
+                showAlert('No suppliers data available for report', 'warning');
+                return;
+            }
+            
             const reportData = {
                 totalSuppliers: suppliers.length,
                 activeSuppliers: suppliers.filter(s => s.status === 'active' || s.status === 'preferred').length,
@@ -2483,172 +3425,19 @@
             }
         }
         
-        // Analytics Functions
-        function loadAnalytics() {
-            createAnalyticsChart();
-            createCustomerChart();
-            loadPerformanceMetrics();
-        }
-        
-        function createAnalyticsChart() {
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            if (analyticsChart) analyticsChart.destroy();
-            
-            // Sample data
-            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const salesData = [85000, 92000, 78000, 105000, 125000, 118000, 135000, 142000, 128000, 145000, 158000, 175000];
-            const profitData = [25000, 28000, 22000, 32000, 38000, 35000, 42000, 45000, 40000, 48000, 52000, 58000];
-            
-            analyticsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Revenue',
-                            data: salesData,
-                            borderColor: '#3498db',
-                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Profit',
-                            data: profitData,
-                            borderColor: '#2ecc71',
-                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            position: 'top',
-                            labels: {
-                                font: { size: 12 },
-                                padding: 20
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'KES ' + value.toLocaleString();
-                                },
-                                font: { size: 11 }
-                            },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(0,0,0,0.05)' }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function createCustomerChart() {
-            const ctx = document.getElementById('customerChart').getContext('2d');
-            if (customerChart) customerChart.destroy();
-            
-            // Customer distribution data
-            const customerTypes = ['Regular', 'VIP', 'Corporate', 'Wholesale'];
-            const customerCounts = [
-                customers.filter(c => c.type === 'Regular').length,
-                customers.filter(c => c.type === 'VIP').length,
-                customers.filter(c => c.type === 'Corporate').length,
-                customers.filter(c => c.type === 'Wholesale').length
-            ];
-            
-            customerChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: customerTypes,
-                    datasets: [{
-                        data: customerCounts,
-                        backgroundColor: [
-                            '#3498db',
-                            '#f39c12',
-                            '#9b59b6',
-                            '#95a5a6'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: { size: 12 },
-                                padding: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function loadPerformanceMetrics() {
-            const container = document.getElementById('performance-metrics');
-            
-            const totalRevenue = transactions
-                .filter(t => t.type === 'sale')
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            const totalExpenses = transactions
-                .filter(t => t.type === 'purchase' || t.type === 'expense')
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            const netProfit = totalRevenue - totalExpenses;
-            const profitMargin = ((netProfit / totalRevenue) * 100).toFixed(1);
-            const avgTransaction = totalRevenue / transactions.filter(t => t.type === 'sale').length;
-            
-            const metrics = [
-                { label: 'Total Revenue', value: `KES ${totalRevenue.toLocaleString()}`, icon: 'fa-money-bill-wave', color: 'text-success' },
-                { label: 'Total Expenses', value: `KES ${totalExpenses.toLocaleString()}`, icon: 'fa-receipt', color: 'text-danger' },
-                { label: 'Net Profit', value: `KES ${netProfit.toLocaleString()}`, icon: 'fa-chart-line', color: 'text-primary' },
-                { label: 'Profit Margin', value: `${profitMargin}%`, icon: 'fa-percentage', color: 'text-info' },
-                { label: 'Avg Transaction', value: `KES ${avgTransaction.toFixed(0).toLocaleString()}`, icon: 'fa-calculator', color: 'text-warning' }
-            ];
-            
-            let html = '';
-            metrics.forEach(metric => {
-                html += `
-                    <div class="d-flex justify-content-between align-items-center mb-3 p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px;">
-                        <div class="d-flex align-items-center">
-                            <i class="fas ${metric.icon} ${metric.color} fs-4 me-3"></i>
-                            <div>
-                                <div class="fw-bold">${metric.label}</div>
-                                <div class="text-muted small">Current period</div>
-                            </div>
-                        </div>
-                        <div class="fw-bold fs-5">${metric.value}</div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        function updateAnalytics() {
-            loadAnalytics();
-        }
-        
         // Notes Functions
         function loadNotes() {
             const container = document.getElementById('notes-container');
+            const emptyState = document.getElementById('notes-empty-state');
+            
+            if (notes.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
             container.innerHTML = '';
             
             notes.forEach(note => {
@@ -2680,8 +3469,228 @@
             });
         }
         
+        function showAddNoteModal() {
+            document.getElementById('noteForm').reset();
+            new bootstrap.Modal(document.getElementById('addNoteModal')).show();
+        }
+        
+        function saveNote() {
+            const note = {
+                id: notes.length > 0 ? Math.max(...notes.map(n => n.id)) + 1 : 1,
+                title: document.getElementById('noteTitle').value,
+                content: document.getElementById('noteContent').value,
+                category: document.getElementById('noteCategory').value,
+                date: new Date().toISOString().split('T')[0],
+                priority: 'medium'
+            };
+            
+            notes.push(note);
+            bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+            loadNotes();
+            saveToLocalStorage();
+            showAlert('Note added successfully!', 'success');
+        }
+        
+        function deleteNote(noteId) {
+            if (confirm('Are you sure you want to delete this note?')) {
+                const index = notes.findIndex(n => n.id === noteId);
+                if (index > -1) {
+                    notes.splice(index, 1);
+                    loadNotes();
+                    saveToLocalStorage();
+                    showAlert('Note deleted successfully!', 'success');
+                }
+            }
+        }
+        
+        // DATA CLEARING AND RESET FUNCTIONS
+        function resetAllData() {
+            if (!confirm('WARNING: This will permanently delete ALL data including products, customers, transactions, suppliers, and notes. This action cannot be undone!\n\nAre you absolutely sure you want to reset ALL data?')) {
+                return;
+            }
+            
+            // Double confirmation for safety
+            if (!confirm('FINAL WARNING: This will delete everything and cannot be recovered. Type "DELETE ALL" to confirm.')) {
+                const userInput = prompt('Type "DELETE ALL" to confirm resetting all data:');
+                if (userInput !== 'DELETE ALL') {
+                    showAlert('Data reset cancelled', 'info');
+                    return;
+                }
+            }
+            
+            // Clear all data arrays
+            products = [];
+            customers = [];
+            transactions = [];
+            suppliers = [];
+            notes = [];
+            
+            // Clear localStorage
+            localStorage.removeItem('businessSuiteData');
+            localStorage.removeItem('businessSuiteFirstRun');
+            
+            // Reload all sections
+            loadDashboard();
+            loadProducts();
+            loadCustomers();
+            loadTransactions();
+            loadSuppliers();
+            loadNotes();
+            
+            showAlert('ALL data has been permanently deleted. The system is now empty.', 'danger');
+        }
+        
+        function clearSpecificData() {
+            // Show modal for selecting what to clear
+            document.getElementById('clearProducts').checked = false;
+            document.getElementById('clearCustomers').checked = false;
+            document.getElementById('clearTransactions').checked = false;
+            document.getElementById('clearSuppliers').checked = false;
+            document.getElementById('clearNotes').checked = false;
+            
+            new bootstrap.Modal(document.getElementById('clearDataModal')).show();
+        }
+        
+        function executeClearData() {
+            const clearProducts = document.getElementById('clearProducts').checked;
+            const clearCustomers = document.getElementById('clearCustomers').checked;
+            const clearTransactions = document.getElementById('clearTransactions').checked;
+            const clearSuppliers = document.getElementById('clearSuppliers').checked;
+            const clearNotes = document.getElementById('clearNotes').checked;
+            
+            if (!clearProducts && !clearCustomers && !clearTransactions && !clearSuppliers && !clearNotes) {
+                showAlert('Please select at least one data type to clear', 'warning');
+                return;
+            }
+            
+            if (!confirm('WARNING: This will permanently delete the selected data. This action cannot be undone!\n\nAre you sure you want to continue?')) {
+                return;
+            }
+            
+            let clearedItems = [];
+            
+            if (clearProducts) {
+                products = [];
+                clearedItems.push('Products');
+            }
+            
+            if (clearCustomers) {
+                customers = [];
+                clearedItems.push('Customers');
+            }
+            
+            if (clearTransactions) {
+                transactions = [];
+                clearedItems.push('Transactions');
+            }
+            
+            if (clearSuppliers) {
+                suppliers = [];
+                clearedItems.push('Suppliers');
+            }
+            
+            if (clearNotes) {
+                notes = [];
+                clearedItems.push('Notes');
+            }
+            
+            // Save to localStorage
+            saveToLocalStorage();
+            
+            // Reload all sections
+            loadDashboard();
+            loadProducts();
+            loadCustomers();
+            loadTransactions();
+            loadSuppliers();
+            loadNotes();
+            
+            bootstrap.Modal.getInstance(document.getElementById('clearDataModal')).hide();
+            showAlert(`Cleared: ${clearedItems.join(', ')}`, 'success');
+        }
+        
+        function loadSampleData() {
+            if (!confirm('This will load sample data for testing purposes. Your current data will be replaced.\n\nAre you sure you want to load sample data?')) {
+                return;
+            }
+            
+            // Load sample data
+            products = [...sampleData.products];
+            customers = [...sampleData.customers];
+            transactions = [...sampleData.transactions];
+            suppliers = [...sampleData.suppliers];
+            notes = [...sampleData.notes];
+            
+            // Save to localStorage
+            saveToLocalStorage();
+            
+            // Reload all sections
+            loadDashboard();
+            loadProducts();
+            loadCustomers();
+            loadTransactions();
+            loadSuppliers();
+            loadNotes();
+            
+            showAlert('Sample data loaded successfully! You can now explore the system features.', 'info');
+        }
+        
+        function showQuickStartGuide() {
+            const guide = `
+                <div class="modal fade" id="quickStartModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Quick Start Guide</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <h6>Getting Started with Business Suite Pro</h6>
+                                <ol class="mb-3">
+                                    <li><strong>Start with Suppliers</strong> - Add your suppliers first</li>
+                                    <li><strong>Add Products</strong> - Add products with supplier information</li>
+                                    <li><strong>Add Customers</strong> - Create your customer database</li>
+                                    <li><strong>Record Transactions</strong> - Add sales and purchases</li>
+                                    <li><strong>Use Analytics</strong> - View business performance</li>
+                                </ol>
+                                
+                                <h6>Data Management</h6>
+                                <ul class="mb-3">
+                                    <li>Your data is automatically saved in your browser</li>
+                                    <li>Export data regularly for backup</li>
+                                    <li>Use the "Reset All Data" option carefully</li>
+                                    <li>Load sample data to explore features</li>
+                                </ul>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> The system starts completely empty. Add your real business data to get accurate reports and analytics.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="loadSampleData(); bootstrap.Modal.getInstance(document.getElementById('quickStartModal')).hide();">Load Sample Data</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('quickStartModal');
+            if (existingModal) existingModal.remove();
+            
+            // Add modal to DOM and show it
+            document.body.insertAdjacentHTML('beforeend', guide);
+            new bootstrap.Modal(document.getElementById('quickStartModal')).show();
+        }
+        
         // Export Functions
         function exportProducts() {
+            if (products.length === 0) {
+                showAlert('No products to export', 'warning');
+                return;
+            }
+            
             const dataStr = JSON.stringify(products, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = `products_export_${new Date().toISOString().split('T')[0]}.json`;
@@ -2695,6 +3704,11 @@
         }
         
         function exportCustomers() {
+            if (customers.length === 0) {
+                showAlert('No customers to export', 'warning');
+                return;
+            }
+            
             const dataStr = JSON.stringify(customers, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = `customers_export_${new Date().toISOString().split('T')[0]}.json`;
@@ -2708,6 +3722,11 @@
         }
         
         function exportTransactions() {
+            if (transactions.length === 0) {
+                showAlert('No transactions to export', 'warning');
+                return;
+            }
+            
             const dataStr = JSON.stringify(transactions, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             const exportFileDefaultName = `transactions_export_${new Date().toISOString().split('T')[0]}.json`;
@@ -2729,6 +3748,11 @@
                 notes: notes,
                 exportDate: new Date().toISOString()
             };
+            
+            if (products.length === 0 && customers.length === 0 && transactions.length === 0 && suppliers.length === 0 && notes.length === 0) {
+                showAlert('No data to export', 'warning');
+                return;
+            }
             
             const dataStr = JSON.stringify(allData, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -2753,7 +3777,7 @@
                 return;
             }
             
-            if (!confirm('Warning: This will replace all current data. Are you sure you want to continue?')) {
+            if (!confirm('WARNING: This will replace all current data with backup data. Current data will be lost.\n\nAre you sure you want to continue?')) {
                 return;
             }
             
@@ -2771,6 +3795,9 @@
                     if (backupData.suppliers) suppliers = backupData.suppliers;
                     if (backupData.notes) notes = backupData.notes;
                     
+                    // Save to localStorage
+                    saveToLocalStorage();
+                    
                     // Reload all sections
                     loadDashboard();
                     loadProducts();
@@ -2780,10 +3807,10 @@
                     loadNotes();
                     
                     fileInput.value = '';
-                    showAlert('Data restored successfully!', 'success');
+                    showAlert('Data restored successfully from backup!', 'success');
                 } catch (error) {
                     console.error('Error restoring data:', error);
-                    showAlert('Error: Invalid backup file format', 'danger');
+                    showAlert('Error: Invalid backup file format. Please select a valid JSON backup file.', 'danger');
                 }
             };
             
@@ -2792,48 +3819,34 @@
         
         // Report Functions
         function generateSalesReport() {
+            if (transactions.filter(t => t.type === 'sale').length === 0) {
+                showAlert('No sales data available for report', 'warning');
+                return;
+            }
+            
             const reportData = {
                 totalSales: transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0),
                 totalTransactions: transactions.filter(t => t.type === 'sale').length,
-                topProducts: [],
-                salesByMonth: []
+                averageSale: transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0) / transactions.filter(t => t.type === 'sale').length
             };
             
-            showAlert('Sales report generated! Check the console for details.', 'info');
-            console.log('Sales Report:', reportData);
+            alert(`Sales Report:\n\nTotal Sales: KES ${reportData.totalSales.toLocaleString()}\nTotal Transactions: ${reportData.totalTransactions}\nAverage Sale: KES ${reportData.averageSale.toFixed(2).toLocaleString()}`);
         }
         
         function generateInventoryReport() {
+            if (products.length === 0) {
+                showAlert('No inventory data available for report', 'warning');
+                return;
+            }
+            
             const reportData = {
                 totalProducts: products.length,
                 totalStockValue: products.reduce((sum, p) => sum + (p.price * p.stock), 0),
-                lowStockItems: products.filter(p => p.stock <= p.minStock && p.stock > 0),
-                outOfStockItems: products.filter(p => p.stock <= 0)
+                lowStockItems: products.filter(p => p.stock <= (p.minStock || 5) && p.stock > 0).length,
+                outOfStockItems: products.filter(p => p.stock <= 0).length
             };
             
-            showAlert('Inventory report generated! Check the console for details.', 'info');
-            console.log('Inventory Report:', reportData);
-        }
-        
-        function generateCustomerReport() {
-            const reportData = {
-                totalCustomers: customers.length,
-                activeCustomers: customers.filter(c => c.status === 'active').length,
-                customerTypes: {},
-                topSpenders: customers.sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5)
-            };
-            
-            // Count customer types
-            customers.forEach(customer => {
-                reportData.customerTypes[customer.type] = (reportData.customerTypes[customer.type] || 0) + 1;
-            });
-            
-            showAlert('Customer report generated! Check the console for details.', 'info');
-            console.log('Customer Report:', reportData);
-        }
-        
-        function printReport() {
-            window.print();
+            alert(`Inventory Report:\n\nTotal Products: ${reportData.totalProducts}\nTotal Stock Value: KES ${reportData.totalStockValue.toLocaleString()}\nLow Stock Items: ${reportData.lowStockItems}\nOut of Stock Items: ${reportData.outOfStockItems}`);
         }
         
         // Utility Functions
@@ -2879,630 +3892,7 @@
             });
             event.target.classList.add('active');
             
-            // In a real app, this would fetch new data based on the period
             showAlert(`Chart period changed to ${period}`, 'info');
-        }
-        
-        // Other existing functions from original code (shortened for brevity)
-        function showAddProductModal() {
-            // Populate supplier dropdown
-            const supplierSelect = document.getElementById('productSupplier');
-            supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-            suppliers.forEach(supplier => {
-                supplierSelect.innerHTML += `<option value="${supplier.name}">${supplier.name}</option>`;
-            });
-            
-            document.getElementById('productForm').reset();
-            new bootstrap.Modal(document.getElementById('addProductModal')).show();
-        }
-        
-        function saveProduct() {
-            const product = {
-                id: products.length + 1,
-                name: document.getElementById('productName').value,
-                sku: document.getElementById('productSKU').value || `PROD-${Date.now()}`,
-                category: document.getElementById('productCategory').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                cost: parseFloat(document.getElementById('productCost').value),
-                stock: parseInt(document.getElementById('productStock').value),
-                minStock: parseInt(document.getElementById('productMinStock').value),
-                maxStock: parseInt(document.getElementById('productMaxStock').value),
-                supplier: document.getElementById('productSupplier').value,
-                description: document.getElementById('productDescription').value,
-                status: 'active'
-            };
-            
-            // Determine stock status
-            if (product.stock <= 0) {
-                product.status = 'out';
-            } else if (product.stock <= product.minStock) {
-                product.status = 'low';
-            }
-            
-            products.push(product);
-            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
-            loadProducts();
-            loadDashboard();
-            showAlert('Product added successfully!', 'success');
-        }
-        
-        function editProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                document.getElementById('productName').value = product.name;
-                document.getElementById('productSKU').value = product.sku;
-                document.getElementById('productCategory').value = product.category;
-                document.getElementById('productPrice').value = product.price;
-                document.getElementById('productCost').value = product.cost;
-                document.getElementById('productStock').value = product.stock;
-                document.getElementById('productMinStock').value = product.minStock;
-                document.getElementById('productMaxStock').value = product.maxStock;
-                document.getElementById('productSupplier').value = product.supplier;
-                document.getElementById('productDescription').value = product.description;
-                
-                new bootstrap.Modal(document.getElementById('addProductModal')).show();
-                showAlert('Edit mode activated. Update the product details.', 'info');
-            }
-        }
-        
-        function deleteProduct(productId) {
-            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-                const index = products.findIndex(p => p.id === productId);
-                if (index > -1) {
-                    products.splice(index, 1);
-                    loadProducts();
-                    loadDashboard();
-                    showAlert('Product deleted successfully!', 'success');
-                }
-            }
-        }
-        
-        function searchProducts() {
-            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
-            const filtered = products.filter(product => 
-                product.name.toLowerCase().includes(searchTerm) ||
-                (product.sku && product.sku.toLowerCase().includes(searchTerm)) ||
-                (product.category && product.category.toLowerCase().includes(searchTerm)) ||
-                (product.description && product.description.toLowerCase().includes(searchTerm))
-            );
-            
-            const table = document.getElementById('products-table');
-            table.innerHTML = '';
-            
-            if (filtered.length === 0) {
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center py-5">
-                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
-                            <p class="text-muted">No products found matching your search</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            filtered.forEach(product => {
-                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= product.minStock ? 'badge-warning' : 'badge-ok';
-                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= product.minStock ? 'Low Stock' : 'In Stock';
-                
-                const row = `
-                    <tr>
-                        <td>${product.name}</td>
-                        <td><code>${product.sku}</code></td>
-                        <td><span class="badge bg-secondary">${product.category}</span></td>
-                        <td class="fw-bold">KES ${product.price.toLocaleString()}</td>
-                        <td>KES ${product.cost.toLocaleString()}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="me-2">${product.stock}</span>
-                                <span class="badge ${stockStatus}">${statusText}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-success">Active</span>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editProduct(${product.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteProduct(${product.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function filterProducts(type) {
-            let filtered = products;
-            if (type === 'low') {
-                filtered = products.filter(p => p.stock <= p.minStock && p.stock > 0);
-            } else if (type === 'out') {
-                filtered = products.filter(p => p.stock <= 0);
-            } else if (type === 'active') {
-                filtered = products.filter(p => p.status === 'active');
-            }
-            
-            const table = document.getElementById('products-table');
-            table.innerHTML = '';
-            
-            filtered.forEach(product => {
-                const stockStatus = product.stock <= 0 ? 'badge-low' : product.stock <= product.minStock ? 'badge-warning' : 'badge-ok';
-                const statusText = product.stock <= 0 ? 'Out of Stock' : product.stock <= product.minStock ? 'Low Stock' : 'In Stock';
-                
-                const row = `
-                    <tr>
-                        <td>${product.name}</td>
-                        <td><code>${product.sku}</code></td>
-                        <td><span class="badge bg-secondary">${product.category}</span></td>
-                        <td class="fw-bold">KES ${product.price.toLocaleString()}</td>
-                        <td>KES ${product.cost.toLocaleString()}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="me-2">${product.stock}</span>
-                                <span class="badge ${stockStatus}">${statusText}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-success">Active</span>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="editProduct(${product.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteProduct(${product.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function showAddCustomerModal() {
-            document.getElementById('customerForm').reset();
-            new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
-        }
-        
-        function saveCustomer() {
-            const customer = {
-                id: customers.length + 1,
-                name: document.getElementById('customerName').value,
-                email: document.getElementById('customerEmail').value,
-                phone: document.getElementById('customerPhone').value,
-                type: document.getElementById('customerType').value,
-                address: document.getElementById('customerAddress').value,
-                city: document.getElementById('customerCity').value,
-                country: document.getElementById('customerCountry').value,
-                totalOrders: 0,
-                totalSpent: 0,
-                lastOrder: new Date().toISOString().split('T')[0],
-                status: document.getElementById('customerActive').checked ? 'active' : 'inactive',
-                joinDate: new Date().toISOString().split('T')[0]
-            };
-            
-            customers.push(customer);
-            bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
-            loadCustomers();
-            loadDashboard();
-            showAlert('Customer added successfully!', 'success');
-        }
-        
-        function viewCustomerDetails(customerId) {
-            const customer = customers.find(c => c.id === customerId);
-            if (customer) {
-                alert(`Customer Details:\n\nName: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nType: ${customer.type}\nAddress: ${customer.address}\nTotal Orders: ${customer.totalOrders}\nTotal Spent: KES ${customer.totalSpent.toLocaleString()}\nStatus: ${customer.status}`);
-            }
-        }
-        
-        function editCustomer(customerId) {
-            const customer = customers.find(c => c.id === customerId);
-            if (customer) {
-                document.getElementById('customerName').value = customer.name;
-                document.getElementById('customerEmail').value = customer.email;
-                document.getElementById('customerPhone').value = customer.phone;
-                document.getElementById('customerType').value = customer.type;
-                document.getElementById('customerAddress').value = customer.address;
-                document.getElementById('customerCity').value = customer.city;
-                document.getElementById('customerCountry').value = customer.country;
-                document.getElementById('customerActive').checked = customer.status === 'active';
-                
-                new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
-                showAlert('Edit mode activated. Update the customer details.', 'info');
-            }
-        }
-        
-        function deleteCustomer(customerId) {
-            if (confirm('Are you sure you want to delete this customer? All associated data will be removed.')) {
-                const index = customers.findIndex(c => c.id === customerId);
-                if (index > -1) {
-                    customers.splice(index, 1);
-                    loadCustomers();
-                    loadDashboard();
-                    showAlert('Customer deleted successfully!', 'success');
-                }
-            }
-        }
-        
-        function sendCustomerEmail(customerId) {
-            const customer = customers.find(c => c.id === customerId);
-            if (customer) {
-                showAlert(`Email dialog for ${customer.name} would open here.`, 'info');
-            }
-        }
-        
-        function searchCustomers() {
-            const searchTerm = document.getElementById('customerSearch').value.toLowerCase();
-            const filtered = customers.filter(customer => 
-                customer.name.toLowerCase().includes(searchTerm) ||
-                customer.email.toLowerCase().includes(searchTerm) ||
-                customer.phone.includes(searchTerm) ||
-                customer.type.toLowerCase().includes(searchTerm) ||
-                customer.city.toLowerCase().includes(searchTerm)
-            );
-            
-            const table = document.getElementById('customers-table');
-            table.innerHTML = '';
-            
-            if (filtered.length === 0) {
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
-                            <p class="text-muted">No customers found matching your search</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            filtered.forEach(customer => {
-                const statusClass = customer.status === 'active' ? 'status-active' : 'status-inactive';
-                const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
-                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase();
-                
-                const row = `
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
-                                    ${initials.substring(0, 2)}
-                                </div>
-                                <div>
-                                    <div class="fw-bold">${customer.name}</div>
-                                    <small class="text-muted">${customer.type} Customer</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>${customer.email}</div>
-                            <small class="text-muted">${customer.phone}</small>
-                        </td>
-                        <td>${customer.totalOrders}</td>
-                        <td class="fw-bold">KES ${customer.totalSpent.toLocaleString()}</td>
-                        <td>${new Date(customer.lastOrder).toLocaleDateString()}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator ${statusClass}"></span>
-                                <span>${statusText}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="viewCustomerDetails(${customer.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-warning" onclick="editCustomer(${customer.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function filterCustomers(type) {
-            let filtered = customers;
-            if (type === 'active') {
-                filtered = customers.filter(c => c.status === 'active');
-            } else if (type === 'inactive') {
-                filtered = customers.filter(c => c.status === 'inactive');
-            } else if (type === 'vip') {
-                filtered = customers.filter(c => c.type === 'VIP');
-            }
-            
-            const table = document.getElementById('customers-table');
-            table.innerHTML = '';
-            
-            filtered.forEach(customer => {
-                const statusClass = customer.status === 'active' ? 'status-active' : 'status-inactive';
-                const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
-                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase();
-                
-                const row = `
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
-                                    ${initials.substring(0, 2)}
-                                </div>
-                                <div>
-                                    <div class="fw-bold">${customer.name}</div>
-                                    <small class="text-muted">${customer.type} Customer</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>${customer.email}</div>
-                            <small class="text-muted">${customer.phone}</small>
-                        </td>
-                        <td>${customer.totalOrders}</td>
-                        <td class="fw-bold">KES ${customer.totalSpent.toLocaleString()}</td>
-                        <td>${new Date(customer.lastOrder).toLocaleDateString()}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator ${statusClass}"></span>
-                                <span>${statusText}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="viewCustomerDetails(${customer.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-warning" onclick="editCustomer(${customer.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function showAddTransactionModal() {
-            // Populate customer dropdown
-            const customerSelect = document.getElementById('transactionCustomer');
-            customerSelect.innerHTML = '<option value="">Select Customer</option>';
-            customers.forEach(customer => {
-                customerSelect.innerHTML += `<option value="${customer.name}">${customer.name}</option>`;
-            });
-            
-            document.getElementById('transactionForm').reset();
-            new bootstrap.Modal(document.getElementById('addTransactionModal')).show();
-        }
-        
-        function toggleTransactionFields() {
-            const type = document.getElementById('transactionType').value;
-            const label = document.getElementById('customerLabel');
-            const select = document.getElementById('transactionCustomer');
-            
-            if (type === 'purchase' || type === 'expense') {
-                label.textContent = 'Supplier *';
-                select.innerHTML = '<option value="">Select Supplier</option>';
-                suppliers.forEach(supplier => {
-                    select.innerHTML += `<option value="${supplier.name}">${supplier.name}</option>`;
-                });
-            } else {
-                label.textContent = 'Customer *';
-                select.innerHTML = '<option value="">Select Customer</option>';
-                customers.forEach(customer => {
-                    select.innerHTML += `<option value="${customer.name}">${customer.name}</option>`;
-                });
-            }
-        }
-        
-        function saveTransaction() {
-            const type = document.getElementById('transactionType').value;
-            const transaction = {
-                id: transactions.length + 1,
-                type: type,
-                date: document.getElementById('transactionDate').value,
-                amount: parseFloat(document.getElementById('transactionAmount').value),
-                description: document.getElementById('transactionDescription').value,
-                paymentMethod: document.getElementById('transactionPaymentMethod').value,
-                status: 'completed'
-            };
-            
-            if (type === 'sale' || type === 'refund') {
-                transaction.customer = document.getElementById('transactionCustomer').value;
-            } else {
-                transaction.supplier = document.getElementById('transactionCustomer').value;
-                
-                // Update supplier purchase history if it's a purchase
-                if (type === 'purchase') {
-                    const supplierName = document.getElementById('transactionCustomer').value;
-                    const supplier = suppliers.find(s => s.name === supplierName);
-                    if (supplier) {
-                        supplier.totalOrders = (supplier.totalOrders || 0) + 1;
-                        supplier.totalPurchases = (supplier.totalPurchases || 0) + transaction.amount;
-                    }
-                }
-            }
-            
-            // Update customer stats if it's a sale
-            if (type === 'sale') {
-                const customerName = document.getElementById('transactionCustomer').value;
-                const customer = customers.find(c => c.name === customerName);
-                if (customer) {
-                    customer.totalOrders += 1;
-                    customer.totalSpent += transaction.amount;
-                    customer.lastOrder = new Date().toISOString().split('T')[0];
-                }
-            }
-            
-            transactions.push(transaction);
-            bootstrap.Modal.getInstance(document.getElementById('addTransactionModal')).hide();
-            loadTransactions();
-            loadDashboard();
-            loadCustomers();
-            loadSuppliers(); // Refresh supplier stats
-            showAlert('Transaction added successfully!', 'success');
-        }
-        
-        function viewTransaction(transactionId) {
-            const transaction = transactions.find(t => t.id === transactionId);
-            if (transaction) {
-                alert(`Transaction Details:\n\nDate: ${new Date(transaction.date).toLocaleString()}\nType: ${transaction.type}\nAmount: KES ${transaction.amount.toLocaleString()}\nCustomer/Supplier: ${transaction.customer || transaction.supplier || 'N/A'}\nDescription: ${transaction.description}\nPayment Method: ${transaction.paymentMethod}\nStatus: ${transaction.status}`);
-            }
-        }
-        
-        function deleteTransaction(transactionId) {
-            if (confirm('Are you sure you want to delete this transaction?')) {
-                const index = transactions.findIndex(t => t.id === transactionId);
-                if (index > -1) {
-                    transactions.splice(index, 1);
-                    loadTransactions();
-                    loadDashboard();
-                    showAlert('Transaction deleted successfully!', 'success');
-                }
-            }
-        }
-        
-        function searchTransactions() {
-            const searchTerm = document.getElementById('transactionSearch').value.toLowerCase();
-            const filtered = transactions.filter(transaction => 
-                (transaction.customer && transaction.customer.toLowerCase().includes(searchTerm)) ||
-                (transaction.supplier && transaction.supplier.toLowerCase().includes(searchTerm)) ||
-                transaction.description.toLowerCase().includes(searchTerm) ||
-                transaction.type.toLowerCase().includes(searchTerm) ||
-                transaction.amount.toString().includes(searchTerm)
-            );
-            
-            const table = document.getElementById('transactions-table');
-            table.innerHTML = '';
-            
-            if (filtered.length === 0) {
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <i class="fas fa-exchange-alt fa-2x text-muted mb-3"></i>
-                            <p class="text-muted">No transactions found matching your search</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            filtered.forEach(transaction => {
-                const typeBadge = transaction.type === 'sale' ? 
-                    '<span class="badge bg-success">Sale</span>' : 
-                    transaction.type === 'purchase' ? 
-                    '<span class="badge bg-warning">Purchase</span>' : 
-                    '<span class="badge bg-danger">Refund</span>';
-                
-                const statusBadge = transaction.status === 'completed' ? 
-                    '<span class="badge bg-success">Completed</span>' : 
-                    '<span class="badge bg-warning">Pending</span>';
-                
-                const row = `
-                    <tr>
-                        <td>${new Date(transaction.date).toLocaleString()}</td>
-                        <td>${typeBadge}</td>
-                        <td class="fw-bold">KES ${transaction.amount.toLocaleString()}</td>
-                        <td>${transaction.customer || transaction.supplier || '-'}</td>
-                        <td>${transaction.items || 1} item(s)</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-info" onclick="viewTransaction(${transaction.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function filterTransactions(type) {
-            let filtered = transactions;
-            if (type !== 'all') {
-                filtered = transactions.filter(t => t.type === type);
-            }
-            
-            const table = document.getElementById('transactions-table');
-            table.innerHTML = '';
-            
-            filtered.forEach(transaction => {
-                const typeBadge = transaction.type === 'sale' ? 
-                    '<span class="badge bg-success">Sale</span>' : 
-                    transaction.type === 'purchase' ? 
-                    '<span class="badge bg-warning">Purchase</span>' : 
-                    '<span class="badge bg-danger">Refund</span>';
-                
-                const statusBadge = transaction.status === 'completed' ? 
-                    '<span class="badge bg-success">Completed</span>' : 
-                    '<span class="badge bg-warning">Pending</span>';
-                
-                const row = `
-                    <tr>
-                        <td>${new Date(transaction.date).toLocaleString()}</td>
-                        <td>${typeBadge}</td>
-                        <td class="fw-bold">KES ${transaction.amount.toLocaleString()}</td>
-                        <td>${transaction.customer || transaction.supplier || '-'}</td>
-                        <td>${transaction.items || 1} item(s)</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-info" onclick="viewTransaction(${transaction.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
-        }
-        
-        function showAddNoteModal() {
-            document.getElementById('noteForm').reset();
-            new bootstrap.Modal(document.getElementById('addNoteModal')).show();
-        }
-        
-        function saveNote() {
-            const note = {
-                id: notes.length + 1,
-                title: document.getElementById('noteTitle').value,
-                content: document.getElementById('noteContent').value,
-                category: document.getElementById('noteCategory').value,
-                date: new Date().toISOString().split('T')[0],
-                priority: 'medium'
-            };
-            
-            notes.push(note);
-            bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
-            loadNotes();
-            showAlert('Note added successfully!', 'success');
-        }
-        
-        function deleteNote(noteId) {
-            if (confirm('Are you sure you want to delete this note?')) {
-                const index = notes.findIndex(n => n.id === noteId);
-                if (index > -1) {
-                    notes.splice(index, 1);
-                    loadNotes();
-                    showAlert('Note deleted successfully!', 'success');
-                }
-            }
         }
         
         function exportAnalytics() {
@@ -3522,6 +3912,8 @@
                     showAddTransactionModal();
                 } else if (currentSection === 'suppliers') {
                     showAddSupplierModal();
+                } else if (currentSection === 'notes') {
+                    showAddNoteModal();
                 }
             }
             
@@ -3535,6 +3927,14 @@
             if (e.ctrlKey && e.key === 'e') {
                 e.preventDefault();
                 exportData();
+            }
+            
+            // Ctrl + D for delete all (with confirmation)
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                if (confirm('Press OK to reset all data (this cannot be undone)')) {
+                    resetAllData();
+                }
             }
         });
     </script>
